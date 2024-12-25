@@ -60,3 +60,6 @@ Edit the `self.split_options` dictionary to change how costs are fractioned.
 ## Known Limitations
 - Currently, the split logic may assume exactly two participants. If you have more participants, you’ll need to expand how fractions and net balances are computed in the code.
 - The application is designed for demonstration purposes and not hardened for production-level error handling or concurrency.
+
+## License
+This project is provided as-is under the MIT License. See [LICENSE](https://github.com/adrianveen/splitter_app/blob/main/LICENSE) for details.

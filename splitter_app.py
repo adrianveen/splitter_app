@@ -1,5 +1,6 @@
 import sys
 import csv
+import string
 from datetime import datetime
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtCore import Qt
@@ -200,6 +201,12 @@ class SplitterApp(QMainWindow):
         if transaction_desc == "":
             QMessageBox.warning(self, "Invalid Input", "Transaction Name cannot be empty.")
             return
+        
+        # Group is entered as "General" if left empty
+        if group == "":
+            group = "general"
+        else:
+            group = group.lower()
 
         # Get the selected split distribution
         split_name = self.split_combo.currentText()
@@ -224,11 +231,18 @@ class SplitterApp(QMainWindow):
 
         # Append transaction to CSV
         self.append_to_csv(
-            [transaction_desc, paid_by, date_selected, f"{amount:.2f}", split_name]
+            [transaction_desc, 
+             paid_by, 
+             group, 
+             date_selected, 
+             f"{amount:.2f}", 
+             category, 
+             split_name]
         )
 
         # Update summary
         self.update_summary()
+        self.update_group_summary()
 
     def load_transactions_from_csv(self):
         """
@@ -238,14 +252,28 @@ class SplitterApp(QMainWindow):
             with open(CSV_FILENAME, "r", newline="", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
-                    if len(row) < 5:
+                    if len(row) < 7:
                         continue
                     row_position = self.table.rowCount()
                     self.table.insertRow(row_position)
-                    for col_index, col_value in enumerate(row):
-                        if col_index == 3:  # Amount column
-                            col_value = f"${float(col_value):.2f}"
-                        self.table.setItem(row_position, col_index, QTableWidgetItem(col_value))
+                    
+                    self.table.setItem(row_position, 0, QTableWidgetItem(row[0]))
+                    self.table.setItem(row_position, 1, QTableWidgetItem(row[1]))
+                    self.table.setItem(row_position, 2, QTableWidgetItem(row[2]))
+                    self.table.setItem(row_position, 3, QTableWidgetItem(row[3]))
+                    # Convert amount to $X.XX
+                    try:
+                        amount_val = float(row[4])
+                        self.table.setItem(row_position, 4, QTableWidgetItem(f"${amount_val:.2f}"))
+                    except ValueError:
+                        self.table.setItem(row_position, 4, QTableWidgetItem(row[4]))
+                    self.table.setItem(row_position, 5, QTableWidgetItem(row[5]))
+                    self.table.setItem(row_position, 6, QTableWidgetItem(row[6]))
+                    
+                    # for col_index, col_value in enumerate(row):
+                    #     if col_index == 3:  # Amount column
+                    #         col_value = f"${float(col_value):.2f}"
+                    #     self.table.setItem(row_position, col_index, QTableWidgetItem(col_value))
         except FileNotFoundError:
             # If the file doesn't exist yet, that's okay.
             pass
@@ -339,11 +367,17 @@ class SplitterApp(QMainWindow):
         else:
             QMessageBox.warning(self, "No Entry Selected", "Please select an entry to delete.")
 
+    def normalize_group_name(sel, group_name):
+        """
+        Normalize the group name by converting to lowercase, stripping spaces, and removing punctuation.
+        """
+        return group_name.strip().lower().translate(str.maketrans('', '', string.punctuation))
+
     def update_group_summary(self):
         """
         Summarizes the amount owed by group and populates the group_summary_table.
         """
-        group_totals = {group: {"Vic": 0, "Adrian": 0} for group in self.transactions_cat}
+        group_totals = {}
 
         for row in range(self.table.rowCount()):
             group_item = self.table.item(row, 2)
@@ -353,10 +387,13 @@ class SplitterApp(QMainWindow):
             if not (group_item and amount_item and split_item):
                 continue
 
-            group = group_item.text()
+            group = self.normalize_group_name(group_item.text())
             amount = float(amount_item.text().replace('$', ''))
             split_name = split_item.text()
             fraction_list = self.split_options.get(split_name, [0.5, 0.5])
+
+            if group not in group_totals:
+                group_totals[group] = {person: 0 for person in self.participants}
 
             for i, person in enumerate(self.participants):
                 owed = amount * fraction_list[i]
@@ -367,9 +404,10 @@ class SplitterApp(QMainWindow):
         for group, totals in group_totals.items():
             row_position = self.group_summary_table.rowCount()
             self.group_summary_table.insertRow(row_position)
-            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
+            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group.capitalize()))
             self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(f"${totals['Vic']:.2f}"))
-            self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${totals['Adrian']:.2f}"))    
+            self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${totals['Adrian']:.2f}"))
+    
 
 def main():
     app = QApplication(sys.argv)
