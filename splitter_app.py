@@ -59,9 +59,9 @@ class SplitterApp(QMainWindow):
         form_layout = QGridLayout()
 
         # 1) Transaction name
-        transaction_name_label = QLabel("Transaction Name:")
-        transaction_name_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
-        form_layout.addWidget(transaction_name_label, 0, 0)
+        transaction_desc_label = QLabel("Transaction Description:")
+        transaction_desc_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
+        form_layout.addWidget(transaction_desc_label, 0, 0)
 
         self.name_input = QLineEdit()
         form_layout.addWidget(self.name_input, 0, 1)
@@ -126,13 +126,16 @@ class SplitterApp(QMainWindow):
         main_layout.addWidget(self.table)
 
         # --- SUMMARY / WHO OWES WHOM ---
-        summary_layout = QHBoxLayout()
-
+        summary_layout = QGridLayout()
+        
         self.summary_label = QLabel("No transactions yet.")
-        summary_layout.addWidget(self.summary_label)
-
+        summary_layout.addWidget(self.summary_label, 0, 0)
         main_layout.addLayout(summary_layout)
 
+        delete_entry_button = QPushButton("Delete Entry")
+        
+        delete_entry_button.clicked.connect(self.delete_entry)
+        summary_layout.addWidget(delete_entry_button, 0, 1)
         # Set main layout
         container.setLayout(main_layout)
 
@@ -146,7 +149,7 @@ class SplitterApp(QMainWindow):
         updates the CSV file, and updates the summary label.
         """
         # Get form values
-        transaction_name = self.name_input.text().strip()
+        transaction_desc = self.name_input.text().strip()
         paid_by = self.paid_by_combo.currentText()
         date_selected = self.date_input.date().toString("yyyy-MM-dd")
 
@@ -158,7 +161,7 @@ class SplitterApp(QMainWindow):
             QMessageBox.warning(self, "Invalid Input", "Please enter a valid amount.")
             return
 
-        if transaction_name == "":
+        if transaction_desc == "":
             QMessageBox.warning(self, "Invalid Input", "Transaction Name cannot be empty.")
             return
 
@@ -170,7 +173,7 @@ class SplitterApp(QMainWindow):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        self.table.setItem(row_position, 0, QTableWidgetItem(transaction_name))
+        self.table.setItem(row_position, 0, QTableWidgetItem(transaction_desc))
         self.table.setItem(row_position, 1, QTableWidgetItem(paid_by))
         self.table.setItem(row_position, 2, QTableWidgetItem(date_selected))
         self.table.setItem(row_position, 3, QTableWidgetItem(f"${amount:.2f}"))
@@ -183,7 +186,7 @@ class SplitterApp(QMainWindow):
 
         # Append transaction to CSV
         self.append_to_csv(
-            [transaction_name, paid_by, date_selected, f"{amount:.2f}", split_name]
+            [transaction_desc, paid_by, date_selected, f"{amount:.2f}", split_name]
         )
 
         # Update summary
@@ -261,6 +264,42 @@ class SplitterApp(QMainWindow):
                 summary_str += f"{person}: ${balance:.2f}\n"
 
         self.summary_label.setText(summary_str)
+    
+    def delete_entry(self):
+        """
+        Delete a selected entry from the table and the CSV file.
+        """
+        # open Qdialog to ask if you would like to remove the file from the table
+        if self.table.selectedItems():
+            confirm_dialog = QMessageBox()
+            confirm_dialog.setIcon(QMessageBox.Question)
+            confirm_dialog.setText("Are you sure you want to delete this entry?")
+            confirm_dialog.setWindowTitle("Delete Entry")
+            confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            confirm_dialog.setDefaultButton(QMessageBox.No)
+            response = confirm_dialog.exec()
+
+            if response == QMessageBox.Yes:
+                # Remove the selected row from the table
+                row = self.table.currentRow()
+                transaction_desc = self.table.item(row, 0).text()
+                self.table.removeRow(row)
+
+                # Remove the selected row from the CSV file
+                with open(CSV_FILENAME, "r", newline="", encoding="utf-8") as csvfile:
+                    reader = csv.reader(csvfile)
+                    rows = list(reader)
+
+                with open(CSV_FILENAME, "w", newline="", encoding="utf-8") as csvfile:
+                    writer = csv.writer(csvfile)
+                    for line in rows:
+                        if line[0] != transaction_desc:
+                            writer.writerow(line)
+                self.update_summary()
+        else:
+            QMessageBox.warning(self, "No Entry Selected", "Please select an entry to delete.")
+
+        
 
 def main():
     app = QApplication(sys.argv)
