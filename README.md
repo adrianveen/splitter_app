@@ -39,7 +39,7 @@ A simple Python/Qt (PySide6) application for tracking expenses, splitting costs 
    cd your_project_folder
 3. Create the conda environment:
    ```bash
-   conda env create -f environment.yml
+   conda env create -f environment.yaml
 4. Run the application
    ```bash
    python splitter_app.py
