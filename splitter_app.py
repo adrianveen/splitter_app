@@ -47,6 +47,7 @@ class SplitterApp(QMainWindow):
             "1/3 - 2/3": [1/3, 2/3],
             "1/4 - 3/4": [1/4, 3/4],
         }
+        self.transactions_cat = ["Food & Drinks", "Travel", "Groceries", "Other"]
 
         # Main container widget
         container = QWidget()
@@ -63,8 +64,8 @@ class SplitterApp(QMainWindow):
         transaction_desc_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
         form_layout.addWidget(transaction_desc_label, 0, 0)
 
-        self.name_input = QLineEdit()
-        form_layout.addWidget(self.name_input, 0, 1)
+        self.desc_input = QLineEdit()
+        form_layout.addWidget(self.desc_input, 0, 1)
 
         # 2) Person who paid
         paid_by_label = QLabel("Paid By:")
@@ -94,26 +95,43 @@ class SplitterApp(QMainWindow):
         self.date_input.setDate(QDate.currentDate())  # Default = today
         form_layout.addWidget(self.date_input, 3, 1)
 
-        # 5) Split fraction
+        # 5) Transaction category
+        category_label = QLabel("Category:")
+        category_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
+        form_layout.addWidget(category_label, 4, 0)
+
+        self.category_combo = QComboBox()
+        self.category_combo.addItems(self.transactions_cat)
+        form_layout.addWidget(self.category_combo, 4, 1)
+
+        # 6) Group Label
+        group_label = QLabel("Group:")
+        group_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
+        form_layout.addWidget(group_label, 5, 0)
+
+        self.group_input = QLineEdit()
+        form_layout.addWidget(self.group_input, 5, 1)
+
+        # 7) Split fraction
         split_fraction_label = QLabel("Split Fraction:")
         split_fraction_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
-        form_layout.addWidget(split_fraction_label, 4, 0)
+        form_layout.addWidget(split_fraction_label, 6, 0)
         self.split_combo = QComboBox()
         self.split_combo.addItems(self.split_options.keys())
-        form_layout.addWidget(self.split_combo, 4, 1)
+        form_layout.addWidget(self.split_combo, 6, 1)
 
         # Add transaction button
         self.add_button = QPushButton("Add Transaction")
         self.add_button.clicked.connect(self.add_transaction)
-        form_layout.addWidget(self.add_button, 5, 0, 1, 2)
+        form_layout.addWidget(self.add_button, 7, 0, 1, 2)
 
         main_layout.addLayout(form_layout)
 
         # --- TABLE WIDGET FOR DISPLAY ---
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
-            ["Transaction Name", "Paid By", "Date", "Amount", "Split"]
+            ["Transaction Name", "Paid By", "Group", "Date", "Amount", "Category","Split"]
         )
         # Configure the table to stretch columns
         header = self.table.horizontalHeader()
@@ -136,12 +154,28 @@ class SplitterApp(QMainWindow):
         
         delete_entry_button.clicked.connect(self.delete_entry)
         summary_layout.addWidget(delete_entry_button, 0, 1)
+
+        self.group_summary_table = QTableWidget()
+        self.group_summary_table.setColumnCount(3)
+        self.group_summary_table.setHorizontalHeaderLabels(
+            ["Group", "Vic Owes", "Adrian Owes"]
+        )
+        # Configure the table to stretch columns
+        header = self.group_summary_table.horizontalHeader()
+        for column in range(self.group_summary_table.columnCount()):
+            header.setSectionResizeMode(column, QHeaderView.Stretch)
+        # Enable scrolling in both directions
+        self.group_summary_table.setAlternatingRowColors(True)
+        self.group_summary_table.setSortingEnabled(False)
+
+        main_layout.addWidget(self.group_summary_table)
         # Set main layout
         container.setLayout(main_layout)
 
         # Load any existing transactions from CSV
         self.load_transactions_from_csv()
         self.update_summary()
+        self.update_group_summary()
 
     def add_transaction(self):
         """
@@ -149,9 +183,11 @@ class SplitterApp(QMainWindow):
         updates the CSV file, and updates the summary label.
         """
         # Get form values
-        transaction_desc = self.name_input.text().strip()
+        transaction_desc = self.desc_input.text().strip()
         paid_by = self.paid_by_combo.currentText()
         date_selected = self.date_input.date().toString("yyyy-MM-dd")
+        group = self.group_input.text().strip()
+        category = self.category_combo.currentText()
 
         # Validate amount input
         try:
@@ -175,12 +211,14 @@ class SplitterApp(QMainWindow):
 
         self.table.setItem(row_position, 0, QTableWidgetItem(transaction_desc))
         self.table.setItem(row_position, 1, QTableWidgetItem(paid_by))
-        self.table.setItem(row_position, 2, QTableWidgetItem(date_selected))
-        self.table.setItem(row_position, 3, QTableWidgetItem(f"${amount:.2f}"))
-        self.table.setItem(row_position, 4, QTableWidgetItem(split_name))
+        self.table.setItem(row_position, 2, QTableWidgetItem(group))
+        self.table.setItem(row_position, 3, QTableWidgetItem(date_selected))
+        self.table.setItem(row_position, 4, QTableWidgetItem(f"${amount:.2f}"))
+        self.table.setItem(row_position, 5, QTableWidgetItem(category)) 
+        self.table.setItem(row_position, 6, QTableWidgetItem(split_name))
 
         # Reset form fields
-        self.name_input.clear()
+        self.desc_input.clear()
         self.amount_input.clear()
         self.date_input.setDate(QDate.currentDate())
 
@@ -232,9 +270,11 @@ class SplitterApp(QMainWindow):
         for row in range(row_count):
             name_item = self.table.item(row, 0)
             paid_by_item = self.table.item(row, 1)
-            date_item = self.table.item(row, 2)
-            amount_item = self.table.item(row, 3)
-            split_item = self.table.item(row, 4)
+            group_item = self.table.item(row, 2)
+            date_item = self.table.item(row, 3)
+            amount_item = self.table.item(row, 4)
+            category_item = self.table.item(row, 5)
+            split_item = self.table.item(row, 6)
 
             if not (name_item and paid_by_item and amount_item and split_item):
                 continue
@@ -253,7 +293,7 @@ class SplitterApp(QMainWindow):
                 net_amounts[person] -= owed
 
         # Build the summary string
-        summary_str = "Summary of Balances:\n"
+        summary_str = "Overall Balance Summary:\n"
         for person in self.participants:
             balance = net_amounts[person]
             if balance < 0:
@@ -299,7 +339,37 @@ class SplitterApp(QMainWindow):
         else:
             QMessageBox.warning(self, "No Entry Selected", "Please select an entry to delete.")
 
-        
+    def update_group_summary(self):
+        """
+        Summarizes the amount owed by group and populates the group_summary_table.
+        """
+        group_totals = {group: {"Vic": 0, "Adrian": 0} for group in self.transactions_cat}
+
+        for row in range(self.table.rowCount()):
+            group_item = self.table.item(row, 2)
+            amount_item = self.table.item(row, 4)
+            split_item = self.table.item(row, 6)
+
+            if not (group_item and amount_item and split_item):
+                continue
+
+            group = group_item.text()
+            amount = float(amount_item.text().replace('$', ''))
+            split_name = split_item.text()
+            fraction_list = self.split_options.get(split_name, [0.5, 0.5])
+
+            for i, person in enumerate(self.participants):
+                owed = amount * fraction_list[i]
+                group_totals[group][person] += owed
+
+        self.group_summary_table.setRowCount(0)  # Clear existing rows
+
+        for group, totals in group_totals.items():
+            row_position = self.group_summary_table.rowCount()
+            self.group_summary_table.insertRow(row_position)
+            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
+            self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(f"${totals['Vic']:.2f}"))
+            self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${totals['Adrian']:.2f}"))    
 
 def main():
     app = QApplication(sys.argv)
