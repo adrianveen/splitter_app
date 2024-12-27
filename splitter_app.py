@@ -2,7 +2,7 @@ import sys
 import csv
 import string
 from datetime import datetime
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtCore import Qt
 
 from PySide6.QtWidgets import (
@@ -150,6 +150,7 @@ class SplitterApp(QMainWindow):
         header = self.table.horizontalHeader()
         for column in range(self.table.columnCount()):
             header.setSectionResizeMode(column, QHeaderView.Stretch)
+
         # Enable scrolling in both directions
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
@@ -531,7 +532,7 @@ def main():
     app = QApplication(sys.argv)
         # Set Fusion style
     app.setStyle("Fusion")
-    
+    app.setWindowIcon(QIcon("./resources/images/wallet-icon.ico"))
     # Create a custom "dark" Fusion palette
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(53, 53, 53))
