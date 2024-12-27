@@ -26,6 +26,13 @@ from PySide6.QtCore import QDate
 
 CSV_FILENAME = "transactions.csv"
 
+CATEGORY_MAP = {
+            "Food & Drinks": "A",
+            "Travel": "B",
+            "Groceries": "C",
+            "Other": "D"
+        }
+
 class SplitterApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -50,6 +57,8 @@ class SplitterApp(QMainWindow):
         }
         self.transactions_cat = ["Food & Drinks", "Travel", "Groceries", "Other"]
 
+        self.serial_numbers_dict = {}
+
         # Main container widget
         container = QWidget()
         self.setCentralWidget(container)
@@ -60,7 +69,7 @@ class SplitterApp(QMainWindow):
         # --- INPUT FORM ---
         form_layout = QGridLayout()
 
-        # 1) Transaction name
+        # 1) Transaction Description
         transaction_desc_label = QLabel("Transaction Description:")
         transaction_desc_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
         form_layout.addWidget(transaction_desc_label, 0, 0)
@@ -83,6 +92,7 @@ class SplitterApp(QMainWindow):
         form_layout.addWidget(amount_label, 2, 0)
 
         self.amount_input = QLineEdit()
+        #self.amount_input.textChanged.connect(self.on_amount_input_changed)
         self.amount_input.setPlaceholderText("0.00")
         form_layout.addWidget(self.amount_input, 2, 1)
 
@@ -130,17 +140,19 @@ class SplitterApp(QMainWindow):
 
         # --- TABLE WIDGET FOR DISPLAY ---
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
+        self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels(
-            ["Transaction Name", "Paid By", "Group", "Date", "Amount", "Category","Split"]
+            ["serial_number", "Description", "Paid By", "Group", "Date", "Amount", "Category","Split"]
         )
+        self.table.setColumnHidden(0, True)  # Hide the serial number column
+
         # Configure the table to stretch columns
         header = self.table.horizontalHeader()
         for column in range(self.table.columnCount()):
             header.setSectionResizeMode(column, QHeaderView.Stretch)
         # Enable scrolling in both directions
         self.table.setAlternatingRowColors(True)
-        self.table.setSortingEnabled(False)
+        self.table.setSortingEnabled(True)
 
         main_layout.addWidget(self.table)
 
@@ -212,32 +224,54 @@ class SplitterApp(QMainWindow):
         split_name = self.split_combo.currentText()
         fraction_list = self.split_options[split_name]
 
+        existing_serial = self.load_existing_serial_numbers()  # Simulate fetched data
+        print(f"Existing serial numbers: {existing_serial}")
+        serial_number = str(self.generate_serial_number(category, existing_serial, date_selected))
+        print(f"New serial number: {serial_number}")
+        self.serial_numbers_dict[serial_number] = {
+            "transaction_desc": transaction_desc,
+            "paid_by": paid_by,
+            "group": group,
+            "date_selected": date_selected,
+            "amount": amount,
+            "category": category,
+            "split_name": split_name
+        }
+
+        # Temporarily disable sorting
+        self.table.setSortingEnabled(False)
         # Add row to table
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        self.table.setItem(row_position, 0, QTableWidgetItem(transaction_desc))
-        self.table.setItem(row_position, 1, QTableWidgetItem(paid_by))
-        self.table.setItem(row_position, 2, QTableWidgetItem(group))
-        self.table.setItem(row_position, 3, QTableWidgetItem(date_selected))
-        self.table.setItem(row_position, 4, QTableWidgetItem(f"${amount:.2f}"))
-        self.table.setItem(row_position, 5, QTableWidgetItem(category)) 
-        self.table.setItem(row_position, 6, QTableWidgetItem(split_name))
+        self.table.setItem(row_position, 0, QTableWidgetItem(serial_number))
+        self.table.setItem(row_position, 1, QTableWidgetItem(transaction_desc))
+        self.table.setItem(row_position, 2, QTableWidgetItem(paid_by))
+        self.table.setItem(row_position, 3, QTableWidgetItem(group))
+        self.table.setItem(row_position, 4, QTableWidgetItem(date_selected))
+        self.table.setItem(row_position, 5, QTableWidgetItem(f"${amount:.2f}"))
+        self.table.setItem(row_position, 6, QTableWidgetItem(category)) 
+        self.table.setItem(row_position, 7, QTableWidgetItem(split_name))
+
+        # Re-enable sorting
+        self.table.setSortingEnabled(True)
 
         # Reset form fields
         self.desc_input.clear()
         self.amount_input.clear()
-        self.date_input.setDate(QDate.currentDate())
+        # self.date_input.setDate(QDate.currentDate())
 
         # Append transaction to CSV
         self.append_to_csv(
-            [transaction_desc, 
+            [serial_number,
+            transaction_desc, 
              paid_by, 
              group, 
              date_selected, 
              f"{amount:.2f}", 
              category, 
-             split_name]
+             split_name
+             ]
         )
 
         # Update summary
@@ -261,23 +295,21 @@ class SplitterApp(QMainWindow):
                     self.table.setItem(row_position, 1, QTableWidgetItem(row[1]))
                     self.table.setItem(row_position, 2, QTableWidgetItem(row[2]))
                     self.table.setItem(row_position, 3, QTableWidgetItem(row[3]))
+                    self.table.setItem(row_position, 4, QTableWidgetItem(row[4]))
                     # Convert amount to $X.XX
                     try:
-                        amount_val = float(row[4])
-                        self.table.setItem(row_position, 4, QTableWidgetItem(f"${amount_val:.2f}"))
+                        amount_val = float(row[5])
+                        self.table.setItem(row_position, 5, QTableWidgetItem(f"${amount_val:.2f}"))
                     except ValueError:
-                        self.table.setItem(row_position, 4, QTableWidgetItem(row[4]))
-                    self.table.setItem(row_position, 5, QTableWidgetItem(row[5]))
+                        self.table.setItem(row_position, 5, QTableWidgetItem(row[5]))
+
                     self.table.setItem(row_position, 6, QTableWidgetItem(row[6]))
+                    self.table.setItem(row_position, 7, QTableWidgetItem(row[7]))
                     
-                    # for col_index, col_value in enumerate(row):
-                    #     if col_index == 3:  # Amount column
-                    #         col_value = f"${float(col_value):.2f}"
-                    #     self.table.setItem(row_position, col_index, QTableWidgetItem(col_value))
         except FileNotFoundError:
             # If the file doesn't exist yet, that's okay.
             pass
-
+         
     def append_to_csv(self, row_data):
         """
         Append a single row to the CSV file.
@@ -296,13 +328,14 @@ class SplitterApp(QMainWindow):
 
         row_count = self.table.rowCount()
         for row in range(row_count):
-            name_item = self.table.item(row, 0)
-            paid_by_item = self.table.item(row, 1)
-            group_item = self.table.item(row, 2)
-            date_item = self.table.item(row, 3)
-            amount_item = self.table.item(row, 4)
-            category_item = self.table.item(row, 5)
-            split_item = self.table.item(row, 6)
+            serial_number_item = self.table.item(row, 0)
+            name_item = self.table.item(row, 1)
+            paid_by_item = self.table.item(row, 2)
+            group_item = self.table.item(row, 3)
+            date_item = self.table.item(row, 4)
+            amount_item = self.table.item(row, 5)
+            category_item = self.table.item(row, 6)
+            split_item = self.table.item(row, 7)
 
             if not (name_item and paid_by_item and amount_item and split_item):
                 continue
@@ -350,23 +383,24 @@ class SplitterApp(QMainWindow):
             if response == QMessageBox.Yes:
                 # Remove the selected row from the table
                 row = self.table.currentRow()
-                transaction_desc = self.table.item(row, 0).text()
+                serial_number = self.table.item(row, 0).text()
+                print(f"Serial number is: {serial_number}")
+                print(f"Removing row {row + 1} from table...")
                 self.table.removeRow(row)
 
                 # Remove the selected row from the CSV file
-                with open(CSV_FILENAME, "r", newline="", encoding="utf-8") as csvfile:
-                    reader = csv.reader(csvfile)
-                    rows = list(reader)
+            with open(CSV_FILENAME, "r", newline="", encoding="utf-8") as csvfile:
+                reader = csv.reader(csvfile)
+                rows = [line for line in reader if line[0] != serial_number]
 
-                with open(CSV_FILENAME, "w", newline="", encoding="utf-8") as csvfile:
-                    writer = csv.writer(csvfile)
-                    for line in rows:
-                        if line[0] != transaction_desc:
-                            writer.writerow(line)
-                self.update_summary()
-                self.update_group_summary()
+            with open(CSV_FILENAME, "w", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerows(rows)
         else:
             QMessageBox.warning(self, "No Entry Selected", "Please select an entry to delete.")
+    
+        self.update_summary()
+        self.update_group_summary()
 
     def normalize_group_name(sel, group_name):
         """
@@ -378,12 +412,20 @@ class SplitterApp(QMainWindow):
         """
         Summarizes the amount owed by group and populates the group_summary_table.
         """
+        # Clear existing rows
+        self.group_summary_table.setRowCount(0)
+
+        # Adjust columns dynamically to match participants
+        self.group_summary_table.setColumnCount(len(self.participants) + 1)
+        self.group_summary_table.setHorizontalHeaderLabels(["Group"] + self.participants)
+
         group_totals = {}
     
         for row in range(self.table.rowCount()):
-            group_item = self.table.item(row, 2)
-            amount_item = self.table.item(row, 4)
-            split_item = self.table.item(row, 6)
+            group_item = self.table.item(row, 3)
+            amount_item = self.table.item(row, 5)
+            split_item = self.table.item(row, 7)
+            paid_by_item = self.table.item(row, 2)
     
             if not (group_item and amount_item and split_item):
                 continue
@@ -397,30 +439,92 @@ class SplitterApp(QMainWindow):
     
             split_name = split_item.text()
             fraction_list = self.split_options.get(split_name, [])
+            paid_by = paid_by_item.text()
     
             if len(fraction_list) != len(self.participants):
                 print(f"Mismatch: Fraction list {fraction_list} does not match participants {self.participants}")
                 continue
-    
+            
+            # Reorder the fraction list so `paid_by` takes the first fraction
+            reordered_fractions = [0] * len(fraction_list)
+            paid_by_index = self.participants.index(paid_by)
+            reordered_fractions[0] = fraction_list[paid_by_index]  # Assign payer's fraction
+            for i, fraction in enumerate(fraction_list):
+                if i != paid_by_index:
+                    reordered_fractions[(i - paid_by_index) % len(fraction_list)] = fraction
+
+
             if group not in group_totals:
                 group_totals[group] = {person: 0 for person in self.participants}
     
             for i, person in enumerate(self.participants):
                 # Calculate the amount owed only if the person didn't pay
-                if fraction_list[i] > 0:  # Assumes the payer's fraction is non-zero
+                if person != paid_by:                    
                     owed = amount * fraction_list[i]
                     group_totals[group][person] += owed
-    
+
         # Clear and populate group_summary_table
         self.group_summary_table.setRowCount(0)
         for group, totals in group_totals.items():
-            for person, owed in totals.items():
-                row_position = self.group_summary_table.rowCount()
-                self.group_summary_table.insertRow(row_position)
-                self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
-                self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(person))
-                self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${owed:.2f}"))
+            row_position = self.group_summary_table.rowCount()
+            self.group_summary_table.insertRow(row_position)
+
+            # set group name in the first column
+            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
+
+
+            for col, person in enumerate(self.participants, start=1):
+                amount_owed = totals.get(person, 0)
+                self.group_summary_table.setItem(row_position, col, QTableWidgetItem(f"${amount_owed:.2f}"))
+
+    def load_existing_serial_numbers(self):
+        """Load existing serial numbers from the CSV."""
+        try:
+            with open(CSV_FILENAME, mode="r") as file:
+                reader = csv.reader(file)
+                return [row[0] for row in reader if row]  # Ensure row is not empty
+        except FileNotFoundError:
+            return []
+        
+    def generate_serial_number(self, category: str, existing_numbers: list, date: str):
+        """
+        Generate a serial number based on the current date and category.
+        
+        Parameters:
+            category (str): The category for which to generate the serial number.
+                            Must be one of ["A", "B", "C", "D"].
+            existing_numbers (list): A list of already generated numbers for the current day
+                                    and category, e.g., ["20241227-A-0001", ...].
+        
+        Returns:
+            str: The generated serial number.
+        """
+        # Map categories to letters
+        
+        if category not in CATEGORY_MAP:
+            raise ValueError(f"Invalid category '{category}'. Must be one of {list(CATEGORY_MAP.keys())}.")
+        
+        category_letter = CATEGORY_MAP[category]
+        
+        date = date.replace("-", "")
+
+        # Extract the max existing serial for today's category
+        max_serial = max(
+            (int(num.split("-")[-1]) for num in existing_numbers 
+                if num.startswith(f"{date}-{category_letter}")), 
+            default = 0
+        )
+        
+        next_serial = max_serial + 1
+
+        return f"{date}-{category_letter}-{next_serial:04d}"
     
+    def on_amount_input_changed(self, amount):
+        """Set the button as focus when the amount changes."""
+        if amount:  # Only set focus if amount is not empty
+            self.add_button.setDefault(True)
+        else:
+            self.add_button.setDefault(False)
 def main():
     app = QApplication(sys.argv)
         # Set Fusion style
