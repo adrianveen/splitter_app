@@ -152,7 +152,7 @@ class SplitterApp(QMainWindow):
             header.setSectionResizeMode(column, QHeaderView.Stretch)
         # Enable scrolling in both directions
         self.table.setAlternatingRowColors(True)
-        self.table.setSortingEnabled(False)
+        self.table.setSortingEnabled(True)
 
         main_layout.addWidget(self.table)
 
@@ -238,10 +238,13 @@ class SplitterApp(QMainWindow):
             "split_name": split_name
         }
 
+        # Temporarily disable sorting
+        self.table.setSortingEnabled(False)
         # Add row to table
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
+        self.table.setItem(row_position, 0, QTableWidgetItem(serial_number))
         self.table.setItem(row_position, 1, QTableWidgetItem(transaction_desc))
         self.table.setItem(row_position, 2, QTableWidgetItem(paid_by))
         self.table.setItem(row_position, 3, QTableWidgetItem(group))
@@ -250,10 +253,13 @@ class SplitterApp(QMainWindow):
         self.table.setItem(row_position, 6, QTableWidgetItem(category)) 
         self.table.setItem(row_position, 7, QTableWidgetItem(split_name))
 
+        # Re-enable sorting
+        self.table.setSortingEnabled(True)
+
         # Reset form fields
         self.desc_input.clear()
         self.amount_input.clear()
-        self.date_input.setDate(QDate.currentDate())
+        # self.date_input.setDate(QDate.currentDate())
 
         # Append transaction to CSV
         self.append_to_csv(
@@ -296,6 +302,7 @@ class SplitterApp(QMainWindow):
                         self.table.setItem(row_position, 5, QTableWidgetItem(f"${amount_val:.2f}"))
                     except ValueError:
                         self.table.setItem(row_position, 5, QTableWidgetItem(row[5]))
+
                     self.table.setItem(row_position, 6, QTableWidgetItem(row[6]))
                     self.table.setItem(row_position, 7, QTableWidgetItem(row[7]))
                     
@@ -405,12 +412,20 @@ class SplitterApp(QMainWindow):
         """
         Summarizes the amount owed by group and populates the group_summary_table.
         """
+        # Clear existing rows
+        self.group_summary_table.setRowCount(0)
+
+        # Adjust columns dynamically to match participants
+        self.group_summary_table.setColumnCount(len(self.participants) + 1)
+        self.group_summary_table.setHorizontalHeaderLabels(["Group"] + self.participants)
+
         group_totals = {}
     
         for row in range(self.table.rowCount()):
             group_item = self.table.item(row, 3)
             amount_item = self.table.item(row, 5)
             split_item = self.table.item(row, 7)
+            paid_by_item = self.table.item(row, 2)
     
             if not (group_item and amount_item and split_item):
                 continue
@@ -424,30 +439,44 @@ class SplitterApp(QMainWindow):
     
             split_name = split_item.text()
             fraction_list = self.split_options.get(split_name, [])
+            paid_by = paid_by_item.text()
     
             if len(fraction_list) != len(self.participants):
                 print(f"Mismatch: Fraction list {fraction_list} does not match participants {self.participants}")
                 continue
-    
+            
+            # Reorder the fraction list so `paid_by` takes the first fraction
+            reordered_fractions = [0] * len(fraction_list)
+            paid_by_index = self.participants.index(paid_by)
+            reordered_fractions[0] = fraction_list[paid_by_index]  # Assign payer's fraction
+            for i, fraction in enumerate(fraction_list):
+                if i != paid_by_index:
+                    reordered_fractions[(i - paid_by_index) % len(fraction_list)] = fraction
+
+
             if group not in group_totals:
                 group_totals[group] = {person: 0 for person in self.participants}
     
             for i, person in enumerate(self.participants):
                 # Calculate the amount owed only if the person didn't pay
-                if fraction_list[i] > 0:  # Assumes the payer's fraction is non-zero
+                if person != paid_by:                    
                     owed = amount * fraction_list[i]
                     group_totals[group][person] += owed
-    
+
         # Clear and populate group_summary_table
         self.group_summary_table.setRowCount(0)
         for group, totals in group_totals.items():
-            for person, owed in totals.items():
-                row_position = self.group_summary_table.rowCount()
-                self.group_summary_table.insertRow(row_position)
-                self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
-                self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(person))
-                self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${owed:.2f}"))
-    
+            row_position = self.group_summary_table.rowCount()
+            self.group_summary_table.insertRow(row_position)
+
+            # set group name in the first column
+            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
+
+
+            for col, person in enumerate(self.participants, start=1):
+                amount_owed = totals.get(person, 0)
+                self.group_summary_table.setItem(row_position, col, QTableWidgetItem(f"${amount_owed:.2f}"))
+
     def load_existing_serial_numbers(self):
         """Load existing serial numbers from the CSV."""
         try:
