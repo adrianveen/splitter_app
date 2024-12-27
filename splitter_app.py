@@ -364,6 +364,7 @@ class SplitterApp(QMainWindow):
                         if line[0] != transaction_desc:
                             writer.writerow(line)
                 self.update_summary()
+                self.update_group_summary()
         else:
             QMessageBox.warning(self, "No Entry Selected", "Please select an entry to delete.")
 
