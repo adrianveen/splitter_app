@@ -379,37 +379,48 @@ class SplitterApp(QMainWindow):
         Summarizes the amount owed by group and populates the group_summary_table.
         """
         group_totals = {}
-
+    
         for row in range(self.table.rowCount()):
             group_item = self.table.item(row, 2)
             amount_item = self.table.item(row, 4)
             split_item = self.table.item(row, 6)
-
+    
             if not (group_item and amount_item and split_item):
                 continue
-
+    
             group = self.normalize_group_name(group_item.text())
-            amount = float(amount_item.text().replace('$', ''))
+            try:
+                amount = float(amount_item.text().replace('$', '').strip())
+            except ValueError:
+                print(f"Invalid amount format: {amount_item.text()}")
+                continue
+    
             split_name = split_item.text()
-            fraction_list = self.split_options.get(split_name, [0.5, 0.5])
-
+            fraction_list = self.split_options.get(split_name, [])
+    
+            if len(fraction_list) != len(self.participants):
+                print(f"Mismatch: Fraction list {fraction_list} does not match participants {self.participants}")
+                continue
+    
             if group not in group_totals:
                 group_totals[group] = {person: 0 for person in self.participants}
-
-            for i, person in enumerate(self.participants):
-                owed = amount * fraction_list[i]
-                group_totals[group][person] += owed
-
-        self.group_summary_table.setRowCount(0)  # Clear existing rows
-
-        for group, totals in group_totals.items():
-            row_position = self.group_summary_table.rowCount()
-            self.group_summary_table.insertRow(row_position)
-            self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group.capitalize()))
-            self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(f"${totals['Vic']:.2f}"))
-            self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${totals['Adrian']:.2f}"))
     
-
+            for i, person in enumerate(self.participants):
+                # Calculate the amount owed only if the person didn't pay
+                if fraction_list[i] > 0:  # Assumes the payer's fraction is non-zero
+                    owed = amount * fraction_list[i]
+                    group_totals[group][person] += owed
+    
+        # Clear and populate group_summary_table
+        self.group_summary_table.setRowCount(0)
+        for group, totals in group_totals.items():
+            for person, owed in totals.items():
+                row_position = self.group_summary_table.rowCount()
+                self.group_summary_table.insertRow(row_position)
+                self.group_summary_table.setItem(row_position, 0, QTableWidgetItem(group))
+                self.group_summary_table.setItem(row_position, 1, QTableWidgetItem(person))
+                self.group_summary_table.setItem(row_position, 2, QTableWidgetItem(f"${owed:.2f}"))
+    
 def main():
     app = QApplication(sys.argv)
         # Set Fusion style
