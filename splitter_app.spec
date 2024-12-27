@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['splitter_app.py'],
+    ['C:\\Users\\Adrian\\Documents\\development\\splitter_app\\batch_scripts\\\\..\\splitter_app.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['resources\\images\\wallet-icon.ico'],
+    icon=['C:\\Users\\Adrian\\Documents\\development\\splitter_app\\resources\\wallet-icon.ico'],
 )
