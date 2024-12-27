@@ -328,41 +328,43 @@ class SplitterApp(QMainWindow):
 
         row_count = self.table.rowCount()
         for row in range(row_count):
-            serial_number_item = self.table.item(row, 0)
             name_item = self.table.item(row, 1)
             paid_by_item = self.table.item(row, 2)
-            group_item = self.table.item(row, 3)
-            date_item = self.table.item(row, 4)
             amount_item = self.table.item(row, 5)
-            category_item = self.table.item(row, 6)
             split_item = self.table.item(row, 7)
 
             if not (name_item and paid_by_item and amount_item and split_item):
                 continue
 
             paid_by = paid_by_item.text()
-            amount = float(amount_item.text().replace('$', ''))
+            amount_str = amount_item.text().replace('$', '').strip()
             split_name = split_item.text()
-            fraction_list = self.split_options.get(split_name, [0.5, 0.5])
 
-            # Increase net for the payer
-            net_amounts[paid_by] += amount
+            try:
+                amount = float(amount_str)
+            except ValueError:
+                continue
 
-            # Subtract each participant's share
+            fraction_list = self.split_options.get(split_name)
+            if not fraction_list:
+                continue
+
+            net_amounts[paid_by] += amount * (1 - fraction_list[0]) # Add the full amount paid by the person
+
             for i, person in enumerate(self.participants):
-                owed = amount * fraction_list[i]
-                net_amounts[person] -= owed
+                if person != paid_by:
+                    net_amounts[person] -= amount * fraction_list[1]
 
         # Build the summary string
         summary_str = "Overall Balance Summary:\n"
         for person in self.participants:
             balance = net_amounts[person]
             if balance < 0:
-                # For negative amounts, show as -$XXX.XX
-                summary_str += f"{person}: -${abs(balance):.2f}\n"
+                summary_str += f"{person}: -${abs(balance):.2f} (owes)\n"
+            elif balance > 0:
+                summary_str += f"{person}: ${balance:.2f} (is owed)\n"
             else:
-                # For zero or positive amounts, show as $XXX.XX
-                summary_str += f"{person}: ${balance:.2f}\n"
+                summary_str += f"{person}: $0.00 (even)\n"
 
         self.summary_label.setText(summary_str)
     
@@ -444,25 +446,19 @@ class SplitterApp(QMainWindow):
             if len(fraction_list) != len(self.participants):
                 print(f"Mismatch: Fraction list {fraction_list} does not match participants {self.participants}")
                 continue
-            
-            # Reorder the fraction list so `paid_by` takes the first fraction
-            reordered_fractions = [0] * len(fraction_list)
-            paid_by_index = self.participants.index(paid_by)
-            reordered_fractions[0] = fraction_list[paid_by_index]  # Assign payer's fraction
-            for i, fraction in enumerate(fraction_list):
-                if i != paid_by_index:
-                    reordered_fractions[(i - paid_by_index) % len(fraction_list)] = fraction
-
 
             if group not in group_totals:
                 group_totals[group] = {person: 0 for person in self.participants}
-    
+
+            # Update the group totals
+            group_totals[group][paid_by] += amount * (1 - fraction_list[0])
             for i, person in enumerate(self.participants):
                 # Calculate the amount owed only if the person didn't pay
                 if person != paid_by:                    
-                    owed = amount * fraction_list[i]
-                    group_totals[group][person] += owed
+                    owed = amount * fraction_list[1]
+                    group_totals[group][person] -= owed
 
+        amount_owed = []
         # Clear and populate group_summary_table
         self.group_summary_table.setRowCount(0)
         for group, totals in group_totals.items():
@@ -475,7 +471,13 @@ class SplitterApp(QMainWindow):
 
             for col, person in enumerate(self.participants, start=1):
                 amount_owed = totals.get(person, 0)
-                self.group_summary_table.setItem(row_position, col, QTableWidgetItem(f"${amount_owed:.2f}"))
+                if amount_owed < 0:
+                    amount_owed = abs(amount_owed)
+                    self.group_summary_table.setItem(row_position, col, QTableWidgetItem(f"-${amount_owed:.2f} (owes)"))
+                elif amount_owed > 0:
+                    self.group_summary_table.setItem(row_position, col, QTableWidgetItem(f"${amount_owed:.2f} (is owed)"))
+                else:
+                    self.group_summary_table.setItem(row_position, col, QTableWidgetItem("$0.00 (even)"))
 
     def load_existing_serial_numbers(self):
         """Load existing serial numbers from the CSV."""
