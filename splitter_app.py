@@ -169,6 +169,7 @@ class SplitterApp(QMainWindow):
         delete_entry_button.clicked.connect(self.delete_entry)
         summary_layout.addWidget(delete_entry_button, 0, 1)
 
+        # --- GROUP SUMMARY TABLE ---
         self.group_summary_table = QTableWidget()
         self.group_summary_table.setColumnCount(3)
         self.group_summary_table.setHorizontalHeaderLabels(
