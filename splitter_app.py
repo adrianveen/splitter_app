@@ -1,4 +1,5 @@
 import sys
+import os
 import csv
 import string
 from datetime import datetime
@@ -529,11 +530,22 @@ class SplitterApp(QMainWindow):
             self.add_button.setDefault(True)
         else:
             self.add_button.setDefault(False)
+    
+def resource_path(relative_path):
+    """Get the absolute path to a resource, works for dev and PyInstaller."""
+    if hasattr(sys, "_MEIPASS"):
+        # Path in a onefile PyInstaller executable
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Path during development
+    return os.path.join(os.path.abspath("."), relative_path)
+
 def main():
     app = QApplication(sys.argv)
         # Set Fusion style
     app.setStyle("Fusion")
-    app.setWindowIcon(QIcon("./resources/images/wallet-icon.ico"))
+    # Set the application icon
+    icon_path = resource_path("resources/images/wallet-icon.ico")
+    app.setWindowIcon(QIcon(icon_path))
     # Create a custom "dark" Fusion palette
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(53, 53, 53))
