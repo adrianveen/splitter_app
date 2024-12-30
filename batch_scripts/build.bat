@@ -52,7 +52,7 @@ if %errorlevel% neq 0 (
 
 :: Run PyInstaller
 echo Compiling %PYTHON_FILE% into a single executable...
-pyinstaller --onefile --noconsole --icon="%ABS_ICON_FILE%" --distpath "%DIST_DIR%" --workpath "%BUILD_DIR%" --add-data "resources/images/wallet-icon.ico;resources/images" "%PYTHON_FILE%"
+pyinstaller --onefile --noconsole --icon="%ABS_ICON_FILE%" --distpath "%DIST_DIR%" --workpath "%BUILD_DIR%" "%PYTHON_FILE%"
 if %errorlevel% neq 0 (
     echo Compilation failed due to an error. Please check the output above.
     pause
