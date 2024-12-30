@@ -27,6 +27,14 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QDate
 
+def resource_path(relative_path):
+    """Get the absolute path to a resource, works for dev and PyInstaller."""
+    if hasattr(sys, "_MEIPASS"):
+        # Path in a onefile PyInstaller executable
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Path during development
+    return os.path.join(os.path.abspath("."), relative_path)
+
 CSV_FILENAME = "transactions.csv"
 
 CATEGORY_MAP = {
@@ -38,7 +46,7 @@ CATEGORY_MAP = {
 
 # This file ID should point to the existing transactions.csv in Google Drive.
 DRIVE_FILE_ID = "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
-CREDENTIALS_FILE = "resources/token.json"  # or token.json if that’s how you stored OAuth
+CREDENTIALS_FILE = resource_path("token.json")  # or token.json if that’s how you stored OAuth
 LOCAL_CSV_PATH = "transactions.csv"    # local file name
 
 class SplitterApp(QMainWindow):
@@ -537,14 +545,6 @@ class SplitterApp(QMainWindow):
             self.add_button.setDefault(True)
         else:
             self.add_button.setDefault(False)
-    
-def resource_path(relative_path):
-    """Get the absolute path to a resource, works for dev and PyInstaller."""
-    if hasattr(sys, "_MEIPASS"):
-        # Path in a onefile PyInstaller executable
-        return os.path.join(sys._MEIPASS, relative_path)
-    # Path during development
-    return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
     # Attempt to download first, to ensure local CSV is up-to-date
