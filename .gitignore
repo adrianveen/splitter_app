@@ -171,4 +171,3 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *.spec
-resources/client_secret_487916228658-0oppcl777k3vo2mvsbrajrc39tfqbkik.apps.googleusercontent.com.json
