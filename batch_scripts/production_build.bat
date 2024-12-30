@@ -58,6 +58,7 @@ pyinstaller --onefile --noconsole ^
   --workpath "%BUILD_DIR%" ^
   --add-data "%ICON_FILE%;resources/images" ^
   --add-data "%ROOT_DIR%/resources/token.json;." ^
+  --name Contribution_Splitter ^
   "%PYTHON_FILE%"
 if %errorlevel% neq 0 (
     echo Compilation failed due to an error. Please check the output above.
