@@ -25,10 +25,11 @@ A simple Python/Qt (PySide6) application for tracking expenses, splitting costs 
   - All transactions are stored in a `transactions.csv` file.
   - New transactions are appended every time you add them.
   - If you delete a transaction, it will be removed from the CSV as well (assuming the deletion logic is included in your code).
+  - Google cloud hosted csv allows for updates from any internet connected user
 
 ## Requirements
 
-- **Python 3.7+**
+- **Python 3.10+**
 - **PySide6** (Install via `pip install PySide6`)
 
 ## Installation
