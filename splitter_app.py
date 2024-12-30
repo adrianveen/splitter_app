@@ -6,6 +6,8 @@ from datetime import datetime
 from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtCore import Qt
 
+from google_api import upload_to_drive, download_from_drive
+
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -33,6 +35,11 @@ CATEGORY_MAP = {
             "Groceries": "C",
             "Other": "D"
         }
+
+# This file ID should point to the existing transactions.csv in Google Drive.
+DRIVE_FILE_ID = "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
+CREDENTIALS_FILE = "resources/token.json"  # or token.json if that’s how you stored OAuth
+LOCAL_CSV_PATH = "transactions.csv"    # local file name
 
 class SplitterApp(QMainWindow):
     def __init__(self):
@@ -540,8 +547,15 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
+    # Attempt to download first, to ensure local CSV is up-to-date
+    print("Downloading the latest CSV from Drive...")
+    try:
+        download_from_drive(DRIVE_FILE_ID, LOCAL_CSV_PATH, CREDENTIALS_FILE)
+    except Exception as e:
+        print(f"Warning: Could not download from Drive. {e}")
+    
     app = QApplication(sys.argv)
-        # Set Fusion style
+    # Set Fusion style
     app.setStyle("Fusion")
     # Set the application icon
     icon_path = resource_path("resources/images/wallet-icon.ico")
@@ -564,7 +578,22 @@ def main():
     app.setPalette(palette)
     window = SplitterApp()
     window.show()
-    sys.exit(app.exec())
+     # Run the event loop, ensuring we can still do an upload after exit.
+    try:
+        exit_code = app.exec()
+    finally:
+        # After the user closes the app, upload the updated CSV
+        print("Uploading updated CSV to Drive...")
+        try:
+            if os.path.exists(LOCAL_CSV_PATH):
+                upload_to_drive(DRIVE_FILE_ID, LOCAL_CSV_PATH, CREDENTIALS_FILE)
+            else:
+                print(f"No local CSV found at {LOCAL_CSV_PATH}; skipping upload.")
+        except Exception as e:
+            print(f"Warning: Could not upload to Drive. {e}")
+
+    sys.exit(exit_code)
+    #sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
