@@ -7,8 +7,6 @@ from splitter_app.models import Transaction
 from splitter_app.persistence import CSVRepository
 from splitter_app.config import (
     LOCAL_CSV_PATH,
-    DRIVE_FILE_ID,
-    CREDENTIALS_FILE,
     PARTICIPANTS,
     CATEGORY_MAP,
 )

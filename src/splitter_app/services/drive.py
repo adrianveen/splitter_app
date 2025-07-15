@@ -5,7 +5,8 @@ Provides simple, project-specific functions to sync the transactions CSV.
 Handles existing file permission issues by removing or resetting permissions.
 """
 import os
-from google_api import upload_to_drive as _upload_to_drive, download_from_drive as _download_from_drive
+from .google_api import upload_to_drive as _upload_to_drive, \
+                         download_from_drive as _download_from_drive
 from splitter_app.config import LOCAL_CSV_PATH, DRIVE_FILE_ID, CREDENTIALS_FILE
 
 __all__ = ["download_csv", "upload_csv"]
