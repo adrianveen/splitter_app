@@ -1,66 +1,102 @@
+
 # Contribution Splitter
 
-A simple Python/Qt (PySide6) application for tracking expenses, splitting costs among participants, and summarizing balances owed or owed to each person. Transactions can be appended to or deleted from a table, and all data is saved in a CSV file.
+A modern desktop application built with Python and PySide6 for managing shared expenses among multiple participants. The app tracks transactions, splits costs, calculates balances, and synchronizes data with Google Drive, enabling real-time collaboration.
 
 ## Features
 
-- **Add Transactions**  
-  - Specify a transaction name (e.g., "Groceries").
-  - Select who paid for the transaction.
-  - Enter the dollar amount with two decimal places.
-  - Optionally change the default date (today) to another date.
-  - Choose how the costs should be split (e.g., evenly, 2/3-1/3).
-  - Automatically saves the transaction in a CSV file.
+### Easy Transaction Management
 
-- **Delete a Selected Transaction**  
-  - Select the row you want to remove in the table.
-  - Click the **Delete** button (if implemented as such) or run the deletion action.
-  - The entry is removed from the table and from the CSV file.
+- **Add Transactions**
+  - Enter a description, amount (CAD), payer, date, category, group, and payer’s share fraction.
+  - Automatically generates unique serial numbers for each entry.
+  - Transactions sync instantly with Google Drive.
 
-- **Balances & Summary**  
-  - Automatically calculates how much each participant has paid or owes based on the defined split fractions.
-  - Displays the total for each participant in a summary section at the bottom, with a `-$` notation for negative balances.
+- **Delete Transactions**
+  - Easily delete selected transactions from the interface.
+  - Changes reflect immediately both locally and on Google Drive.
 
-- **CSV Data Persistence**  
-  - All transactions are stored in a `transactions.csv` file.
-  - New transactions are appended every time you add them.
-  - If you delete a transaction, it will be removed from the CSV as well (assuming the deletion logic is included in your code).
-  - Google cloud hosted csv allows for updates from any internet connected user
+### Automatic Balance Calculation
 
-## Requirements
+- Clearly displays amounts owed and paid by each participant.
+- Summarizes total and group-specific balances for easy understanding.
 
-- **Python 3.10+**
-- **PySide6** (Install via `pip install PySide6`)
+### Google Drive Sync
+
+- Stores data remotely in a CSV file on Google Drive for easy access and updates.
+- Automatically synchronizes transactions upon opening and closing the application.
+
+### User-Friendly Interface
+
+- Dark-themed Fusion style for enhanced readability.
+- Interactive tables and summaries dynamically update with user actions.
+
+### Data Persistence
+
+- CSV-based local storage for offline access and resilience.
+- Automatically handles legacy data formats.
 
 ## Installation
 
-1. Clone or download this repository.
-2. Navigate to the project folder:
-   ```bash
-   cd your_project_folder
-3. Create the conda environment:
-   ```bash
-   conda env create -f environment.yaml
-4. Run the application
-   ```bash
-   python splitter_app.py
+### Option 1: For End Users (Recommended)
+
+Simply download and run the pre-built executable.
+
+- [Download Latest Release (Windows)](https://github.com/adrianveen/splitter_app/releases/latest)
+- Extract and run `splitter_app.exe`.
+
+### Option 2: For Developers & Contributors
+
+#### Requirements
+
+- **Python 3.10+**
+- **Conda** (recommended) or Python venv
+- **PySide6**
+- **Google API Python Client Libraries**
+
+#### Setup
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/adrianveen/splitter_app.git
+cd splitter_app
+```
+
+2. Install dependencies using conda:
+
+```bash
+conda env create -f environment.yaml
+conda activate splitter_app_env
+```
+
+3. Configure Google Drive API:
+
+- Download OAuth2 credentials from [Google Cloud Console](https://console.cloud.google.com/).
+- Save credentials JSON as `resources/credentials.json`.
+- Authorize the application upon first run.
+
+4. Launch the app:
+
+```bash
+python src/splitter_app/main.py
+```
 
 ## Usage
 
-1. Add a transaction
-2. Delete a transaction
-3. View Summary
+- **Add Transactions**: Complete the form fields and click "Add Transaction."
+- **Delete Transactions**: Select a transaction row, then click "Delete Entry."
+- **Balances & Summaries**: View live-updated financial summaries at the bottom of the app.
 
-## Customizing
+## Customization
 
-- **Participants**
-Edit the `self.participants` list in `splitter_app.py` to add or remove names.
-- **Split Options**
-Edit the `self.split_options` dictionary to change how costs are fractioned.
+- **Participants & Categories**: Customize the participants and transaction categories in `config.py`.
+- **Split Logic**: Adjustable splits directly through the UI or via configuration.
 
 ## Known Limitations
-- Currently, the split logic may assume exactly two participants. If you have more participants, you’ll need to expand how fractions and net balances are computed in the code.
-- The application is designed for demonstration purposes and not hardened for production-level error handling or concurrency.
+
+- Primarily optimized for two main participants, expandable with minor code modifications.
 
 ## License
-This project is provided as-is under the MIT License. See [LICENSE](https://github.com/adrianveen/splitter_app/blob/main/LICENSE) for details.
+
+This project is licensed under the MIT License. Refer to [LICENSE](https://github.com/adrianveen/splitter_app/blob/main/LICENSE) for complete details.
