@@ -11,6 +11,12 @@ import os
 from pathlib import Path
 from splitter_app.utils import resource_path
 
+
+# at the top, after your imports
+SCOPES: list[str] = ["https://www.googleapis.com/auth/drive.file"]
+
+# path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
+CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
 # --- Environment variable for external credentials ---
 # If set, this path will be used instead of the bundled token.json
 ENV_CREDENTIALS_VAR = "GOOGLE_TOKEN_PATH"

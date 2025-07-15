@@ -5,7 +5,9 @@ a = Analysis(
     ['C:\\Users\\Adrian\\Documents\\development\\splitter_app\\batch_scripts\\\\..\\splitter_app.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ("src/splitter_app/resources/credentials.json", "resources")
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

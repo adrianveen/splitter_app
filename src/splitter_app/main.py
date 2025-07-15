@@ -8,19 +8,28 @@ from splitter_app.ui.main_window import MainWindow
 from splitter_app.controllers import SplitterController
 from splitter_app.services.drive import download_csv, upload_csv
 from splitter_app.config import PARTICIPANTS, TRANSACTION_CATEGORIES, LOCAL_CSV_PATH
-
+from splitter_app.services.auth import ensure_credentials
 
 def main():
     """
     Entry point for the Contribution Splitter application.
     Applies theming, syncs CSV with Drive, shows the UI, and uploads on exit.
-    Errors during sync are shown via dialogs instead of terminal prints.
     """
     # 1) Create the QApplication early so we can show message boxes
     app = QApplication(sys.argv)
     apply_dark_fusion(app)
 
-    # 2) Sync down with Drive
+    # 2) First-run: make sure we have a token.json, then sync down with Drive
+    try:
+        token_path = ensure_credentials()
+    except Exception as e:
+        QMessageBox.critical(
+            None,
+            "Authentication Error",
+            f"Could not complete Google OAuth flow:\n{e}"
+        )
+        sys.exit(1)
+
     try:
         download_csv()
     except PermissionError as e:
@@ -70,7 +79,6 @@ def main():
                 "No transactions file found; skipping upload."
             )
         sys.exit(exit_code)
-
 
 if __name__ == "__main__":
     main()
