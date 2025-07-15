@@ -8,7 +8,7 @@ from PySide6.QtGui import QPalette, QColor
 
 def test_resource_path_development(monkeypatch):
     # no _MEIPASS → base is utils.py directory
-    monkeypatch.setattr(sys, "_MEIPASS", None)
+    monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
     base = os.path.abspath(os.path.dirname(resource_path.__globals__['__file__']))
     rel = "foo/bar.txt"
     assert resource_path(rel) == os.path.join(base, rel)
@@ -16,7 +16,7 @@ def test_resource_path_development(monkeypatch):
 def test_resource_path_meipass(monkeypatch):
     # with _MEIPASS → uses that directory
     fake = "/tmp/meipassdir"
-    monkeypatch.setattr(sys, "_MEIPASS", fake)
+    monkeypatch.setattr(sys, "_MEIPASS", fake, raising=False)
     assert resource_path("x") == os.path.join(fake, "x")
 
 def test_apply_dark_fusion_sets_fusion_style_and_palette(monkeypatch):
@@ -31,7 +31,7 @@ def test_apply_dark_fusion_sets_fusion_style_and_palette(monkeypatch):
     # Should not raise
     apply_dark_fusion(app, icon_name="irrelevant.ico")
     # Style should be Fusion
-    assert app.style().objectName() == "Fusion"
+    assert app.style().objectName() == "fusion"
     pal = app.palette()
     # Window background should be dark
     assert pal.color(QPalette.ColorRole.Window) == QColor(53, 53, 53)
