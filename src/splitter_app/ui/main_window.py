@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         self.participants = participants
         self.transactions_cat = categories
 
-        self.setWindowTitle("Contribution Splitter")
+        self.setWindowTitle("Contribution Splitter v2.0.0")
         self.setMinimumSize(800, 600)
 
         self._build_ui()
