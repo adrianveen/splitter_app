@@ -67,7 +67,7 @@ cd splitter_app
 
 ```bash
 conda env create -f environment.yaml
-conda activate splitter_app_env
+conda activate splitter_app
 ```
 
 3. Configure Google Drive API:
