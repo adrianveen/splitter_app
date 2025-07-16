@@ -74,6 +74,13 @@ def test_allocate_shares_rounding_dust():
     assert shares["B"] == pytest.approx(3.50)
     assert shares["C"] == pytest.approx(3.50)
 
+def test_allocate_shares_unknown_payer():
+    parts = ["A", "B"]
+    shares = SplitterController._allocate_shares(20.0, 0.5, "C", parts)
+    assert shares["A"] == pytest.approx(5.0)
+    assert shares["B"] == pytest.approx(5.0)
+    assert shares["C"] == pytest.approx(10.0)
+
 # --- Tests for serial-number generation ---
 
 def test_generate_serial():

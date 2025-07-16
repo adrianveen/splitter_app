@@ -67,10 +67,17 @@ class SplitterController:
           with the last ower absorbing any tiny rounding diff
         Guarantees that sum(shares.values()) == round(amount, 2).
         """
+        # Include the payer in the share map even if they are not listed in
+        # participants to avoid misallocation.
         shares = {p: 0.0 for p in participants}
-        n = len(participants)
+        if payer not in shares:
+            shares[payer] = 0.0
 
-        if n == 0:
+        n = len(shares)
+
+        # No owers: payer covers full amount
+        if n == 1:
+            shares[payer] = round(amount, 2)
             return shares
 
         # 1) Payer’s portion
