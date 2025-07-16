@@ -1,6 +1,6 @@
 import pytest
 from splitter_app.ui.main_window import MainWindow
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem
 from PySide6.QtCore import QDate
 
 @pytest.fixture(scope="session")
@@ -55,3 +55,24 @@ def test_on_delete_clicked_no_selection_shows_warning(app, monkeypatch):
     assert calls, "Expected a warning to be shown"
     title, msg = calls[0]
     assert "No Entry Selected" in title
+
+def test_on_delete_clicked_emits_serial(app):
+    win = MainWindow(["A","B"], ["Cat"])
+    win.table.setRowCount(1)
+    serial = "42"
+    item = QTableWidgetItem(serial)
+    win.table.setItem(0, 0, item)
+
+    # avoid needing real selection handling
+    win.table.setCurrentCell(0, 0)
+    win.table.selectRow(0)
+    win.table.selectedItems = lambda: [item]
+
+    captured = {}
+    def catcher(sn):
+        captured['sn'] = sn
+
+    win.transaction_deleted.connect(catcher)
+    win._on_delete_clicked()
+
+    assert captured.get('sn') == serial
