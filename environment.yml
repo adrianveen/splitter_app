@@ -2,4 +2,15 @@ name: splitter_app
 channels:
   - conda-forge
   - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pytest
+  - google-api-python-client
+  - google-auth
+  - google-auth-oauthlib
+  - google-auth-httplib2
+  - pip:
+      - PySide6>=6.6.2
+      - pyinstaller
 prefix: C:\ProgramData\anaconda3\envs\splitter_app
