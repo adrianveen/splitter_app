@@ -1,28 +1,32 @@
 ```mermaid
-%%{ init: { theme: "default", flowchart: { layout: "dagre" } } }%%
+---
+config:
+  layout: elk
+  look: neo
+  theme: base
+---
 flowchart LR
-    A(["Launch app"]) ==> B{{"First launch?<br/>Need Google sign-in?"}}
-    B == Yes ==> C["OAuth pop-up<br/>(choose account)"]
-    C ==> E[["Download transactions.csv<br/>from Drive"]]
-    B == No ==> D[["Skip sign-in<br/>(token already saved)"]]
+    A(["Launch app"]) ==> B{{"First launch?<br>Need Google sign-in?"}}
+    B == Yes ==> C["OAuth pop-up<br>(choose account)"]
+    C ==> E[["Download transactions.csv<br>from Drive"]]
+    B == No ==> D[["Skip sign-in<br>(token already saved)"]]
     D ==> E
-    E ==> F["Table & balances<br/>now visible"]
-    F --> G{{"User action"}}
+    E ==> F["Table &amp; balances<br>now visible"]
+    F ==> G{{"User action"}}
     G == Add ==> H[/"Add expense"/]
-    H ==> I["Insert new row<br/>Recalculate balances"]
+    H ==> I["Insert new row<br>Recalculate balances"]
     I === G
     G == Delete ==> J[/"Delete expense"/]
-    J ==> K["Remove row<br/>Recalculate balances"]
+    J ==> K["Remove row<br>Recalculate balances"]
     K ==> G
     G ==> L(["Close window"])
-    L ==> M[["Upload updated CSV<br/>to Drive"]]
-    M --> N(["Exit app"])
-    %%  colours (keep if you like – they inline fine)
+    L ==> M[["Upload updated CSV<br>to Drive"]]
+    M ==> N(["Exit app"])
     style A fill:#FFE0B2,color:#424242
     style B fill:#C8E6C9
     style C fill:#FFCDD2
-    style D fill:#BBDEFB
     style E fill:#C8E6C9
+    style D fill:#BBDEFB
     style F fill:#C8E6C9
     style G fill:#FFF9C4
     style H fill:#C8E6C9
