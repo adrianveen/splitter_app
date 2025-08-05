@@ -1,0 +1,47 @@
+splitter_app/
+├── .gitattributes
+├── .gitignore
+├── .vscode/
+│   └── launch.json
+├── LICENSE
+├── README.md
+├── environment.yml
+├── requirements.txt
+├── splitter_app.spec
+├── batch_scripts/
+│   ├── dev_build.bat
+│   └── production_build.bat
+├── scripts/
+│   └── get_token.py
+├── src/
+│   └── splitter_app/
+│       ├── __init__.py
+│       ├── main.py
+│       ├── controllers.py
+│       ├── config.py
+│       ├── models.py
+│       ├── persistence.py
+│       ├── utils.py
+│       ├── services/
+│       │   ├── __init__.py
+│       │   ├── auth.py
+│       │   ├── drive.py
+│       │   └── google_api.py
+│       ├── ui/
+│       │   ├── __init__.py
+│       │   ├── main_window.py
+│       │   └── theme.py
+│       └── resources/
+│           └── images/
+│               ├── icon.ico
+│               └── wallet-icon.ico
+├── tests/
+│   ├── conftest.py
+│   ├── test_controllers.py
+│   ├── test_drive.py
+│   ├── test_main_window.py
+│   ├── test_models.py
+│   ├── test_persistence.py
+│   └── test_utils_theme.py
+└── tools/
+    └── bfg-1.15.0.jar
