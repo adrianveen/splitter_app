@@ -1,4 +1,7 @@
-import os
+import sys, os
+# Add the src directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
 from splitter_app.config import CREDENTIALS_FILE, DRIVE_FILE_ID
 from splitter_app.services.google_api import _service, _whoami, _assert_file_accessible
 
