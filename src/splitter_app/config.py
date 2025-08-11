@@ -13,7 +13,7 @@ from splitter_app.utils import resource_path
 
 
 # at the top, after your imports
-SCOPES: list[str] = ["https://www.googleapis.com/auth/drive.file"]
+SCOPES: list[str] = ["https://www.googleapis.com/auth/drive"]
 
 # path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
 # You can override this with the environment variable below to point to a
