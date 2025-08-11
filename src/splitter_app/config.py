@@ -16,14 +16,24 @@ from splitter_app.utils import resource_path
 SCOPES: list[str] = ["https://www.googleapis.com/auth/drive.file"]
 
 # path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
-CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
+# You can override this with the environment variable below to point to a
+# different client (e.g., when testing a new GCP project).
+ENV_CLIENT_SECRETS_VAR = "GOOGLE_CLIENT_SECRETS_FILE"
+_env_client_secrets = os.getenv(ENV_CLIENT_SECRETS_VAR)
+if _env_client_secrets:
+    CLIENT_SECRETS_FILE: str = str(Path(_env_client_secrets))
+else:
+    CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
+
 # --- Environment variable for external credentials ---
 # If set, this path overrides the default token path
 ENV_CREDENTIALS_VAR = "GOOGLE_TOKEN_PATH"
 
 # --- Google Drive Settings ---
 # The Drive file ID for the transactions CSV
-DRIVE_FILE_ID: str = "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
+# You can override this per environment/session using GOOGLE_DRIVE_FILE_ID
+ENV_DRIVE_FILE_ID_VAR = "GOOGLE_DRIVE_FILE_ID"
+DRIVE_FILE_ID: str = os.getenv(ENV_DRIVE_FILE_ID_VAR) or "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
 
 # Path to OAuth2 credentials JSON
 # Priority:
