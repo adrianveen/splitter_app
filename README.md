@@ -1,5 +1,5 @@
 
-# Contribution Splitter
+# Splitter App
 
 A modern desktop application built with Python and PySide6 for managing shared expenses among multiple participants. The app tracks transactions, splits costs, calculates balances, and synchronizes data with Google Drive, enabling real-time collaboration.
 
