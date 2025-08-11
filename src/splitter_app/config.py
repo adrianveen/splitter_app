@@ -13,7 +13,7 @@ from splitter_app.utils import resource_path
 
 
 # at the top, after your imports
-SCOPES: list[str] = ["https://www.googleapis.com/auth/drive.file"]
+SCOPES: list[str] = ["https://www.googleapis.com/auth/drive"]
 
 # path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
 # You can override this with the environment variable below to point to a
@@ -23,7 +23,7 @@ _env_client_secrets = os.getenv(ENV_CLIENT_SECRETS_VAR)
 if _env_client_secrets:
     CLIENT_SECRETS_FILE: str = str(Path(_env_client_secrets))
 else:
-    CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
+    CLIENT_SECRETS_FILE: str = os.path.normpath(resource_path("resources/credentials.json"))
 
 # --- Environment variable for external credentials ---
 # If set, this path overrides the default token path

@@ -19,6 +19,8 @@ def ensure_credentials() -> str:
     Make sure we have a valid token.json in the user config dir.
     Returns the path to the credentials file to use.
     """
+    # confirm which file it's reading
+    # print("Using CLIENT_SECRETS_FILE:", CLIENT_SECRETS_FILE)
     # 1) Decide where to store the token
     token_path_str = os.getenv(ENV_CREDENTIALS_VAR) or str(default_config_path)
     token_path = Path(token_path_str)
