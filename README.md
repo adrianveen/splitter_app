@@ -66,7 +66,7 @@ cd splitter_app
 2. Install dependencies using conda:
 
 ```bash
-conda env create -f environment.yaml
+conda env create -f environment.yml
 conda activate splitter_app
 ```
 
@@ -80,6 +80,30 @@ conda activate splitter_app
 
 ```bash
 python src/splitter_app/main.py
+```
+
+## Running tests
+
+Run tests from the repo root with pytest. Network calls are mocked and the Qt UI runs offscreen in tests, so Google credentials are not required.
+
+```bash
+# install dependencies if needed
+pip install -r requirements.txt
+
+# run all tests
+pytest -q
+
+# run a single file
+pytest tests/test_models.py -q
+
+# run a single test
+pytest tests/test_models.py::test_from_csv_row_valid -q
+
+# stop on first failure
+pytest -x
+
+# filter by substring
+pytest -k "download or theme" -q
 ```
 
 ## Usage
