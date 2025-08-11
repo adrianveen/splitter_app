@@ -23,7 +23,7 @@ _env_client_secrets = os.getenv(ENV_CLIENT_SECRETS_VAR)
 if _env_client_secrets:
     CLIENT_SECRETS_FILE: str = str(Path(_env_client_secrets))
 else:
-    CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
+    CLIENT_SECRETS_FILE: str = os.path.normpath(resource_path("resources/credentials.json"))
 
 # --- Environment variable for external credentials ---
 # If set, this path overrides the default token path
