@@ -18,7 +18,7 @@ SCOPES: list[str] = ["https://www.googleapis.com/auth/drive.file"]
 # path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
 CLIENT_SECRETS_FILE: str = resource_path("resources/credentials.json")
 # --- Environment variable for external credentials ---
-# If set, this path will be used instead of the bundled token.json
+# If set, this path overrides the default token path
 ENV_CREDENTIALS_VAR = "GOOGLE_TOKEN_PATH"
 
 # --- Google Drive Settings ---
@@ -29,16 +29,15 @@ DRIVE_FILE_ID: str = "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
 # Priority:
 # 1) Path from ENV_CREDENTIALS_VAR
 # 2) Default at ~/.config/splitter_app/token.json
-# 3) Bundled resources/token.json
 _env_token_path = os.getenv(ENV_CREDENTIALS_VAR)
 default_config_path = Path.home() / ".config" / "splitter_app" / "token.json"
 
-if _env_token_path and Path(_env_token_path).exists():
+if _env_token_path:
+    # Use the path from the environment variable, even if it doesn't yet exist
     CREDENTIALS_FILE: str = str(Path(_env_token_path))
-elif default_config_path.exists():
-    CREDENTIALS_FILE: str = str(default_config_path)
 else:
-    CREDENTIALS_FILE: str = resource_path("resources/token.json")
+    # Fall back to the standard config directory; the token will be created here
+    CREDENTIALS_FILE: str = str(default_config_path)
 
 # Local path where the transactions CSV is stored/loaded
 LOCAL_CSV_PATH: str = resource_path("transactions.csv")
