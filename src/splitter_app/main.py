@@ -4,10 +4,17 @@ import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
 from splitter_app.ui.theme import apply_light_minimal_theme
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QUrl
 from splitter_app.ui.main_window import MainWindow
 from splitter_app.controllers import SplitterController
 from splitter_app.services.drive import download_csv, upload_csv
-from splitter_app.config import PARTICIPANTS, TRANSACTION_CATEGORIES, LOCAL_CSV_PATH
+from splitter_app.config import (
+    PARTICIPANTS,
+    TRANSACTION_CATEGORIES,
+    LOCAL_CSV_PATH,
+    DRIVE_FILE_ID,
+)
 from splitter_app.services.auth import ensure_credentials
 
 def main():
@@ -39,6 +46,17 @@ def main():
             str(e)
         )
         sys.exit(1)
+    except FileNotFoundError as e:
+        response = QMessageBox.question(
+            None,
+            "Request Access",
+            f"{e}\n\nRequest access to the Drive file?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if response == QMessageBox.Yes:
+            url = QUrl(f"https://drive.google.com/file/d/{DRIVE_FILE_ID}/view")
+            QDesktopServices.openUrl(url)
+        # continue with whatever local data exists
     except Exception as e:
         QMessageBox.warning(
             None,
@@ -66,6 +84,16 @@ def main():
         if os.path.exists(LOCAL_CSV_PATH):
             try:
                 upload_csv()
+            except FileNotFoundError as e:
+                response = QMessageBox.question(
+                    None,
+                    "Request Access",
+                    f"{e}\n\nRequest access to the Drive file?",
+                    QMessageBox.Yes | QMessageBox.No,
+                )
+                if response == QMessageBox.Yes:
+                    url = QUrl(f"https://drive.google.com/file/d/{DRIVE_FILE_ID}/view")
+                    QDesktopServices.openUrl(url)
             except Exception as e:
                 QMessageBox.warning(
                     None,

@@ -13,7 +13,10 @@ from splitter_app.utils import resource_path
 
 
 # at the top, after your imports
-SCOPES: list[str] = ["https://www.googleapis.com/auth/drive"]
+SCOPES: list[str] = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/spreadsheets.readonly",
+]
 
 # path to your OAuth2 client-secrets JSON (downloaded from Google Cloud Console)
 # You can override this with the environment variable below to point to a
@@ -34,6 +37,13 @@ ENV_CREDENTIALS_VAR = "GOOGLE_TOKEN_PATH"
 # You can override this per environment/session using GOOGLE_DRIVE_FILE_ID
 ENV_DRIVE_FILE_ID_VAR = "GOOGLE_DRIVE_FILE_ID"
 DRIVE_FILE_ID: str = os.getenv(ENV_DRIVE_FILE_ID_VAR) or "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
+
+# --- Google Sheets Settings ---
+# Optional spreadsheet ID and range for reading transactions directly from Sheets
+ENV_SHEETS_ID_VAR = "GOOGLE_SHEETS_ID"
+ENV_SHEETS_RANGE_VAR = "GOOGLE_SHEETS_RANGE"
+SHEETS_SPREADSHEET_ID: str = os.getenv(ENV_SHEETS_ID_VAR, "")
+SHEETS_RANGE: str = os.getenv(ENV_SHEETS_RANGE_VAR, "Sheet1!A:H")
 
 # Path to OAuth2 credentials JSON
 # Priority:
