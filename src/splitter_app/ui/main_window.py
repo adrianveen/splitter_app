@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.participants = participants
         self.transactions_cat = categories
 
-        self.setWindowTitle("Splitter App v2.0.2")
+        self.setWindowTitle("Splitter App v2.0.3")
         self.setMinimumSize(800, 600)
 
         self._build_ui()
@@ -134,8 +134,7 @@ class MainWindow(QMainWindow):
         ])
         self.table.setColumnHidden(0, True)  # hide serial internally
         hdr = self.table.horizontalHeader()
-        for col in range(self.table.columnCount()):
-            hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         main_layout.addWidget(self.table)

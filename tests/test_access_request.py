@@ -13,7 +13,7 @@ def test_request_access_link_opened(monkeypatch):
             return 0
 
     monkeypatch.setattr(main_module, "QApplication", lambda *a, **k: DummyApp())
-    monkeypatch.setattr(main_module, "apply_dark_fusion", lambda app: None)
+    monkeypatch.setattr(main_module, "apply_light_minimal_theme", lambda app: None)
 
     # Simulate credential and download behavior
     monkeypatch.setattr(main_module, "ensure_credentials", lambda: "token")

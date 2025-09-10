@@ -1,6 +1,6 @@
 import pytest
 from splitter_app.ui.main_window import MainWindow
-from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import QDate
 
 @pytest.fixture(scope="session")
@@ -76,3 +76,16 @@ def test_on_delete_clicked_emits_serial(app):
     win._on_delete_clicked()
 
     assert captured.get('sn') == serial
+
+
+def test_window_title_has_current_version(app):
+    win = MainWindow(["Alice", "Bob"], ["Cat"])
+    assert win.windowTitle() == "Splitter App v2.0.3"
+
+
+def test_transaction_table_columns_resizable(app):
+    win = MainWindow(["Alice", "Bob"], ["Cat"])
+    header = win.table.horizontalHeader()
+    for col in range(win.table.columnCount()):
+        assert header.sectionResizeMode(col) == QHeaderView.ResizeMode.Interactive
+
