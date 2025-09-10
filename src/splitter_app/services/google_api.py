@@ -77,3 +77,16 @@ def download_from_drive(file_id, output_path, credentials_path):
             if status:
                 print(f"Download progress: {int(status.progress() * 100)}%")
     print(f"Downloaded to {output_path}")
+
+
+def read_sheet(spreadsheet_id, range_name, credentials_path):
+    """Return values from a Google Sheet range."""
+    creds = Credentials.from_authorized_user_file(credentials_path)
+    service = build('sheets', 'v4', credentials=creds)
+    result = (
+        service.spreadsheets()
+        .values()
+        .get(spreadsheetId=spreadsheet_id, range=range_name)
+        .execute()
+    )
+    return result.get("values", [])
