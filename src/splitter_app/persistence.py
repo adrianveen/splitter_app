@@ -7,12 +7,54 @@ Adds support for legacy CSV formats with split descriptions.
 import csv
 import os
 import re
-import fcntl
 from contextlib import contextmanager
 from typing import List
 
 from splitter_app.models import Transaction
 from splitter_app.config import PARTICIPANTS
+
+
+# Cross-platform file locking shim: use fcntl on POSIX, msvcrt on Windows
+try:  # pragma: no cover - platform dependent
+    import fcntl as _fcntl  # type: ignore
+
+    class _FcntlProxy:
+        LOCK_SH = _fcntl.LOCK_SH
+        LOCK_EX = _fcntl.LOCK_EX
+        LOCK_UN = _fcntl.LOCK_UN
+
+        @staticmethod
+        def flock(file_obj, lock_flag):
+            _fcntl.flock(file_obj, lock_flag)
+
+    fcntl = _FcntlProxy()  # exposed name matches POSIX usage
+except Exception:  # Windows: provide best-effort locking via msvcrt
+    import msvcrt  # type: ignore
+
+    class _FcntlProxy:
+        # Mirror common POSIX values so tests comparing constants still work
+        LOCK_SH = 1
+        LOCK_EX = 2
+        LOCK_UN = 8
+
+        @staticmethod
+        def flock(file_obj, lock_flag):
+            # Best-effort: treat shared/exclusive as an exclusive region lock.
+            # Lock/unlock 1 byte from start of file. Ignore failures gracefully.
+            try:
+                if lock_flag == _FcntlProxy.LOCK_UN:
+                    msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    # Block until lock acquired to emulate advisory locking
+                    current_pos = file_obj.tell()
+                    file_obj.seek(0)
+                    msvcrt.locking(file_obj.fileno(), msvcrt.LK_LOCK, 1)
+                    file_obj.seek(current_pos)
+            except OSError:
+                # On Windows, locking can fail for some filesystems; ignore.
+                pass
+
+    fcntl = _FcntlProxy()
 
 
 class CSVRepository:
