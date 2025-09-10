@@ -76,3 +76,27 @@ def test_on_delete_clicked_emits_serial(app):
     win._on_delete_clicked()
 
     assert captured.get('sn') == serial
+
+
+def test_group_summary_table_sorting_enabled(app):
+    win = MainWindow(["A", "B"], ["Cat"])
+    assert win.group_summary_table.isSortingEnabled()
+
+
+def test_dark_mode_action_toggles_theme(app, monkeypatch):
+    win = MainWindow(["A", "B"], ["Cat"])
+
+    called = {"mode": None}
+    monkeypatch.setattr(
+        "splitter_app.ui.main_window.apply_dark_fusion",
+        lambda a: called.update(mode="dark"),
+    )
+    monkeypatch.setattr(
+        "splitter_app.ui.main_window.apply_muji_theme",
+        lambda a: called.update(mode="light"),
+    )
+
+    win.dark_mode_action.setChecked(True)
+    assert called["mode"] == "dark"
+    win.dark_mode_action.setChecked(False)
+    assert called["mode"] == "light"
