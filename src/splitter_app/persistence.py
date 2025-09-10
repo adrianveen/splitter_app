@@ -7,6 +7,8 @@ Adds support for legacy CSV formats with split descriptions.
 import csv
 import os
 import re
+import fcntl
+from contextlib import contextmanager
 from typing import List
 
 from splitter_app.models import Transaction
@@ -24,6 +26,18 @@ class CSVRepository:
         """
         self.csv_path = csv_path
 
+    @contextmanager
+    def _open_locked(self, mode: str, lock: int):
+        """Open *csv_path* applying an advisory file lock."""
+        # Ensure directory exists before attempting to open
+        os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
+        with open(self.csv_path, mode, newline='', encoding='utf-8') as f:
+            fcntl.flock(f, lock)
+            try:
+                yield f
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+
     def load_all(self) -> List[Transaction]:
         """
         Load all transactions from the CSV file, handling both new and legacy formats.
@@ -33,7 +47,7 @@ class CSVRepository:
             return []
 
         transactions: List[Transaction] = []
-        with open(self.csv_path, newline='', encoding='utf-8') as f:
+        with self._open_locked('r', fcntl.LOCK_SH) as f:
             reader = csv.reader(f)
             for row in reader:
                 if not row:
@@ -80,10 +94,7 @@ class CSVRepository:
         Append a single transaction to the CSV file.
         Creates the file if it does not exist.
         """
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
-
-        with open(self.csv_path, 'a', newline='', encoding='utf-8') as f:
+        with self._open_locked('a', fcntl.LOCK_EX) as f:
             writer = csv.writer(f)
             writer.writerow(txn.to_csv_row())
 
@@ -95,10 +106,7 @@ class CSVRepository:
         transactions = self.load_all()
         remaining = [t for t in transactions if t.serial_number != serial_number]
 
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
-
-        with open(self.csv_path, 'w', newline='', encoding='utf-8') as f:
+        with self._open_locked('w', fcntl.LOCK_EX) as f:
             writer = csv.writer(f)
             for t in remaining:
                 writer.writerow(t.to_csv_row())
