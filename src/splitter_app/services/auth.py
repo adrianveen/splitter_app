@@ -40,10 +40,14 @@ def ensure_credentials() -> str:
             )
             creds = flow.run_local_server(port=0)
 
-        # ensure directory exists & save the token
+        # ensure directory exists & save the token with restricted permissions
         token_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(token_path, "w", encoding="utf-8") as f:
+        # create the file with mode 0o600 to avoid exposing credentials
+        fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(creds.to_json())
+        # in case the file already existed, force permissions to 600
+        os.chmod(token_path, 0o600)
 
     # 4) Monkey-patch config.CREDENTIALS_FILE so download/upload use the new token
     _config.CREDENTIALS_FILE = token_path_str
