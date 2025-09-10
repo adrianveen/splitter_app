@@ -36,8 +36,8 @@ def apply_dark_fusion(app: QApplication, icon_name: str = "wallet-icon.ico") -> 
         print(f"Warning: icon '{icon_path}' not found; using default icon")
 
 
-def apply_muji_theme(app: QApplication, icon_name: str = "wallet-icon.ico") -> None:
-    """Apply a light, Muji-inspired minimalist palette and basic styling."""
+def apply_light_minimal_theme(app: QApplication, icon_name: str = "wallet-icon.ico") -> None:
+    """Apply a light, minimal palette and basic styling."""
     app.setStyle("Fusion")
 
     palette = QPalette()
