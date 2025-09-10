@@ -3,7 +3,8 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
     QPushButton, QTableWidget, QTableWidgetItem, QGridLayout,
-    QDateEdit, QVBoxLayout, QMessageBox, QHeaderView, QDoubleSpinBox, QHBoxLayout
+    QDateEdit, QVBoxLayout, QMessageBox, QHeaderView, QDoubleSpinBox, QHBoxLayout,
+    QFrame
 )
 from PySide6.QtCore import Qt, QDate, Signal
 
@@ -35,6 +36,8 @@ class MainWindow(QMainWindow):
         container = QWidget()
         self.setCentralWidget(container)
         main_layout = QVBoxLayout(container)
+        main_layout.setContentsMargins(24, 24, 24, 24)
+        main_layout.setSpacing(18)
 
         # --- INPUT FORM ---
         form_layout = QGridLayout()
@@ -138,12 +141,18 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.table)
 
         # --- SUMMARY & DELETE ---
-        summary_layout = QGridLayout()
+        summary_frame = QFrame()
+        summary_frame.setObjectName("summaryFrame")
+        summary_layout = QHBoxLayout(summary_frame)
+        summary_layout.setContentsMargins(12, 12, 12, 12)
         self.summary_label = QLabel("No transactions yet.")
-        summary_layout.addWidget(self.summary_label, 0, 0)
+        self.summary_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.summary_label.setWordWrap(True)
+        summary_layout.addWidget(self.summary_label)
+        summary_layout.addStretch()
         self.delete_button = QPushButton("Delete Entry")
-        summary_layout.addWidget(self.delete_button, 0, 1)
-        main_layout.addLayout(summary_layout)
+        summary_layout.addWidget(self.delete_button)
+        main_layout.addWidget(summary_frame)
 
         # --- GROUP SUMMARY TABLE ---
         self.group_summary_table = QTableWidget()

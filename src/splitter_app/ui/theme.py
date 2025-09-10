@@ -34,3 +34,45 @@ def apply_dark_fusion(app: QApplication, icon_name: str = "wallet-icon.ico") -> 
     else:
         # Avoid crashing if the icon is missing; useful in testing/packaging
         print(f"Warning: icon '{icon_path}' not found; using default icon")
+
+
+def apply_light_minimal_theme(app: QApplication, icon_name: str = "wallet-icon.ico") -> None:
+    """Apply a light, minimal palette and basic styling."""
+    app.setStyle("Fusion")
+
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor("#f4f3f0"))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#2e2e2e"))
+    palette.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#fafafa"))
+    palette.setColor(QPalette.ColorRole.Text, QColor("#2e2e2e"))
+    palette.setColor(QPalette.ColorRole.Button, QColor("#e5e4e2"))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#2e2e2e"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#c6c5b9"))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#2e2e2e"))
+    app.setPalette(palette)
+
+    app.setStyleSheet(
+        """
+        QTableWidget {
+            gridline-color: #d0d0d0;
+            alternate-background-color: #fafafa;
+        }
+        QHeaderView::section {
+            background-color: #f0f0f0;
+            padding: 4px;
+            border: 1px solid #d0d0d0;
+        }
+        QFrame#summaryFrame {
+            background-color: #ffffff;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+        }
+        """
+    )
+
+    icon_path = resource_path(f"resources/images/{icon_name}")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+    else:
+        print(f"Warning: icon '{icon_path}' not found; using default icon")
