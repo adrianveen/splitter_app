@@ -11,10 +11,8 @@ a = Analysis(
     pathex=["src"],              # so it can find `splitter_app` as a top‐level package
     binaries=[],
     datas=[
-        # credentials.json → resources/credentials.json in the bundle
-        ("src/splitter_app/resources/credentials.json", "resources"),
-        # app icon → bundle root
-        ("src/splitter_app/resources/images/wallet-icon.ico", "."),
+    ("src/splitter_app/resources/credentials.json", "resources"),
+    ("src/splitter_app/resources/images/wallet-icon.ico", "resources/images"),
     ],
     hiddenimports=[
         "PySide6.QtCore",

@@ -1,81 +1,92 @@
-"""Thin wrappers around the Google Drive API.
+# src/splitter_app/services/google_api.py  (keep the filename you use now)
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
+import io
 
-The original implementation imported the google-api-python-client at module
-import time.  In environments where that dependency is not available (for
-example during unit tests or on machines that do not interact with Google
-Drive) merely importing this module would raise ``ModuleNotFoundError``.
+def _service(credentials_path):
+    creds = Credentials.from_authorized_user_file(credentials_path)
+    return build('drive', 'v3', credentials=creds)
 
-To make the rest of the application testable without the optional Google
-libraries installed we try to import the client lazily and fall back to
-stubbed ``None`` objects when the import fails.  The public functions check for
-these stubs and raise a clear ``ImportError`` only when they are actually used.
-This mirrors the behaviour of other optional dependencies and keeps unrelated
-code paths working.
-"""
+def _whoami(service):
+    # Works with Drive scope: returns the authed user email/display name
+    about = service.about().get(fields='user(displayName,emailAddress)').execute()
+    return about['user']['emailAddress'], about['user']['displayName']
 
-try:  # pragma: no cover - exercised indirectly in tests
-    from googleapiclient.discovery import build
-    from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-    from google.oauth2.credentials import Credentials
-except ModuleNotFoundError:  # pragma: no cover - executed when library missing
-    build = MediaFileUpload = MediaIoBaseDownload = Credentials = None
+def _assert_file_accessible(service, file_id: str):
+    # Preflight: verify the file exists *and* the authed user can see it.
+    return service.files().get(
+        fileId=file_id,
+        supportsAllDrives=True,
+        fields='id,name,driveId,owners(emailAddress,displayName),permissions'
+    ).execute()
 
 def upload_to_drive(drive_file_id, local_file_path, credentials_path):
-    """Upload ``local_file_path`` to the Drive file ``drive_file_id``.
+    service = _service(credentials_path)
+    email, _ = _whoami(service)
 
-    Raises
-    ------
-    ImportError
-        If the Google API client libraries are not installed.
-    """
-    if build is None or MediaFileUpload is None or Credentials is None:
-        raise ImportError(
-            "google-api-python-client is required to upload files to Drive"
-        )
+    try:
+        _assert_file_accessible(service, drive_file_id)
+    except HttpError as e:
+        if e.resp.status == 404:
+            raise FileNotFoundError(
+                f"Drive file '{drive_file_id}' not found or not shared with {email}. "
+                "If the file lives in a Shared Drive, ensure `supportsAllDrives=True` "
+                "is used (it is), and that this user has at least Editor access."
+            ) from e
+        raise
 
-    creds = Credentials.from_authorized_user_file(credentials_path)
-    service = build("drive", "v3", credentials=creds)
-
-    media_body = MediaFileUpload(local_file_path, mimetype="text/csv")
-
-    updated_file = (
-        service.files()
-        .update(fileId=drive_file_id, media_body=media_body, fields="id")
-        .execute()
-    )
-
-    print(f"Updated existing file with ID: {updated_file.get('id')}")
-
+    media_body = MediaFileUpload(local_file_path, mimetype='text/csv')
+    try:
+        updated = service.files().update(
+            fileId=drive_file_id,
+            media_body=media_body,
+            fields='id',
+            supportsAllDrives=True
+        ).execute()
+    except HttpError as e:
+        if e.resp.status in (403, 404):
+            raise PermissionError(
+                f"Update failed for '{drive_file_id}' as {email}. "
+                "Check sharing and scope."
+            ) from e
+        raise
+    print(f"Updated file ID: {updated.get('id')}")
 
 def download_from_drive(file_id, output_path, credentials_path):
-    """Download the Drive file ``file_id`` to ``output_path``.
+    service = _service(credentials_path)
+    email, _ = _whoami(service)
 
-    The function mirrors :func:`upload_to_drive` in its error handling; an
-    :class:`ImportError` is raised if the Google API client is missing.  This
-    keeps the rest of the application usable without the dependency installed
-    and allows tests to patch these functions easily.
-    """
-    if (
-        build is None
-        or MediaIoBaseDownload is None
-        or Credentials is None
-    ):
-        raise ImportError(
-            "google-api-python-client is required to download files from Drive"
-        )
+    try:
+        meta = _assert_file_accessible(service, file_id)
+        print(f"Downloading '{meta['name']}' (id={meta['id']}) as {email}")
+    except HttpError as e:
+        if e.resp.status == 404:
+            raise FileNotFoundError(
+                f"Drive file '{file_id}' not found or not shared with {email}."
+            ) from e
+        raise
 
-    import io
-
-    creds = Credentials.from_authorized_user_file(credentials_path)
-    service = build("drive", "v3", credentials=creds)
-
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(output_path, "wb")
-    downloader = MediaIoBaseDownload(fh, request)
-
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-        if status:
-            print(f"Download progress: {int(status.progress() * 100)}%")
+    request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
+    with io.FileIO(output_path, 'wb') as fh:
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+            if status:
+                print(f"Download progress: {int(status.progress() * 100)}%")
     print(f"Downloaded to {output_path}")
+
+
+def read_sheet(spreadsheet_id, range_name, credentials_path):
+    """Return values from a Google Sheet range."""
+    creds = Credentials.from_authorized_user_file(credentials_path)
+    service = build('sheets', 'v4', credentials=creds)
+    result = (
+        service.spreadsheets()
+        .values()
+        .get(spreadsheetId=spreadsheet_id, range=range_name)
+        .execute()
+    )
+    return result.get("values", [])

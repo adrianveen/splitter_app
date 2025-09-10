@@ -19,19 +19,37 @@ def test_resource_path_meipass(monkeypatch):
     monkeypatch.setattr(sys, "_MEIPASS", fake, raising=False)
     assert resource_path("x") == os.path.join(fake, "x")
 
+
+def test_resource_path_rejects_traversal(monkeypatch):
+    # Ensure base path is the module dir
+    monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
+    with pytest.raises(ValueError):
+        resource_path("../evil.txt")
+
 def test_apply_dark_fusion_sets_fusion_style_and_palette(monkeypatch):
     # Creating a fresh QApplication for testing
     app = QApplication.instance() or QApplication([])
-    # stub out icon lookup to avoid file-not-found
+    # stub out resource_path to avoid relying on package data
     monkeypatch.setattr(
-        resource_path.__globals__['resource_path'],
-        "__call__",
-        lambda self, path: path
+        "splitter_app.ui.theme.resource_path",
+        lambda path: path
     )
-    # Should not raise
+    # Should not raise even if file doesn't exist
     apply_dark_fusion(app, icon_name="irrelevant.ico")
     # Style should be Fusion
     assert app.style().objectName() == "fusion"
     pal = app.palette()
     # Window background should be dark
     assert pal.color(QPalette.ColorRole.Window) == QColor(53, 53, 53)
+
+
+def test_apply_dark_fusion_missing_icon(monkeypatch, capsys):
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(
+        "splitter_app.ui.theme.resource_path",
+        lambda path: path
+    )
+    # icon path doesn't exist → warning printed
+    apply_dark_fusion(app, icon_name="missing.ico")
+    captured = capsys.readouterr().out
+    assert "missing.ico" in captured

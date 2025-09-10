@@ -21,9 +21,10 @@ A modern desktop application built with Python and PySide6 for managing shared e
 - Clearly displays amounts owed and paid by each participant.
 - Summarizes total and group-specific balances for easy understanding.
 
-### Google Drive Sync
+### Cloud Sync
 
 - Stores data remotely in a CSV file on Google Drive for easy access and updates.
+- Optionally reads transactions directly from a Google Sheet, removing the need for a CSV download.
 - Automatically synchronizes transactions upon opening and closing the application.
 
 ### User-Friendly Interface
@@ -70,11 +71,11 @@ conda env create -f environment.yml
 conda activate splitter_app
 ```
 
-3. Configure Google Drive API:
+3. Configure Google Drive/Sheets API:
 
 - Download OAuth2 credentials from [Google Cloud Console](https://console.cloud.google.com/).
 - Save credentials JSON as `resources/credentials.json`.
-- Authorize the application upon first run.
+- Authorize the application upon first run. Ensure the Sheet and Drive file are shared with this account if used.
 
 4. Launch the app:
 
