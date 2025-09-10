@@ -1,5 +1,6 @@
 import pytest
 from splitter_app.ui.main_window import MainWindow
+from splitter_app.version import __version__
 from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import QDate
 
@@ -80,7 +81,7 @@ def test_on_delete_clicked_emits_serial(app):
 
 def test_window_title_has_current_version(app):
     win = MainWindow(["Alice", "Bob"], ["Cat"])
-    assert win.windowTitle() == "Splitter App v2.0.3"
+    assert win.windowTitle() == f"Splitter App v{__version__}"
 
 
 def test_transaction_table_columns_resizable(app):

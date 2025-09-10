@@ -1,12 +1,12 @@
 # src/splitter_app/ui/main_window.py
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
-    QPushButton, QTableWidget, QTableWidgetItem, QGridLayout,
-    QDateEdit, QVBoxLayout, QMessageBox, QHeaderView, QDoubleSpinBox, QHBoxLayout,
-    QFrame
+    QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QPushButton,
+    QTableWidget, QGridLayout, QDateEdit, QVBoxLayout, QMessageBox,
+    QHeaderView, QDoubleSpinBox, QHBoxLayout, QFrame
 )
 from PySide6.QtCore import Qt, QDate, Signal
+from splitter_app.version import __version__
 
 class MainWindow(QMainWindow):
     """
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.participants = participants
         self.transactions_cat = categories
 
-        self.setWindowTitle("Splitter App v2.0.3")
+        self.setWindowTitle(f"Splitter App v{__version__}")
         self.setMinimumSize(800, 600)
 
         self._build_ui()
@@ -134,7 +134,11 @@ class MainWindow(QMainWindow):
         ])
         self.table.setColumnHidden(0, True)  # hide serial internally
         hdr = self.table.horizontalHeader()
-        hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        # Allow per-column resizing and fill remaining space
+        for col in range(self.table.columnCount()):
+            hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+        hdr.setStretchLastSection(True)
+        hdr.setSectionsMovable(True)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         main_layout.addWidget(self.table)
