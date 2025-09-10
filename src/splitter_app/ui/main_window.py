@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
         for col in range(self.group_summary_table.columnCount()):
             hdr2.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
         self.group_summary_table.setAlternatingRowColors(True)
-        self.group_summary_table.setSortingEnabled(False)
+        self.group_summary_table.setSortingEnabled(True)
         main_layout.addWidget(self.group_summary_table)
 
     def _connect_signals(self):
