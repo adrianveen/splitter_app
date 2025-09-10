@@ -1,4 +1,5 @@
 # src/splitter_app/ui/theme.py
+import os
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
@@ -26,6 +27,10 @@ def apply_dark_fusion(app: QApplication, icon_name: str = "wallet-icon.ico") -> 
     palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
     app.setPalette(palette)
 
-    # 3) Application icon
+    # 3) Application icon (optional)
     icon_path = resource_path(f"resources/images/{icon_name}")
-    app.setWindowIcon(QIcon(icon_path))
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+    else:
+        # Avoid crashing if the icon is missing; useful in testing/packaging
+        print(f"Warning: icon '{icon_path}' not found; using default icon")
