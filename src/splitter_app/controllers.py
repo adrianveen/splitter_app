@@ -155,7 +155,7 @@ class SplitterController:
                 else:
                     parts.append(f"{p}: ${bal:.2f}")
 
-            self.window.summary_label.setText(", ".join(parts))
+            self.window.summary_label.setText("\n".join(parts))
 
         # 3) Group summary (shares vs paid → net balance)
         from collections import defaultdict  # should already be at top of file
@@ -212,7 +212,10 @@ class SplitterController:
         formatted as “-$xx.xx” if negative, “$xx.xx” if ≥0.
         """
         table = self.window.group_summary_table
-        table.setRowCount(len(share_summary))
+        rows = len(share_summary)
+        table.setRowCount(rows + 1)
+
+        totals = {p: 0.0 for p in PARTICIPANTS}
 
         for row, (group, owed_map) in enumerate(share_summary.items()):
             table.setItem(row, 0, QTableWidgetItem(group))
@@ -220,6 +223,13 @@ class SplitterController:
                 owed = owed_map.get(p, 0.0)
                 paid = paid_summary[group].get(p, 0.0)
                 bal = paid - owed
-                # no space after minus; two decimals; positive shows with $
+                totals[p] += bal
                 text = f"-${abs(bal):.2f}" if bal < 0 else f"${bal:.2f}"
                 table.setItem(row, col, QTableWidgetItem(text))
+
+        total_row = rows
+        table.setItem(total_row, 0, QTableWidgetItem("Total"))
+        for col, p in enumerate(PARTICIPANTS, start=1):
+            bal = totals[p]
+            text = f"-${abs(bal):.2f}" if bal < 0 else f"${bal:.2f}"
+            table.setItem(total_row, col, QTableWidgetItem(text))

@@ -3,7 +3,7 @@
 import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
-from splitter_app.ui.theme import apply_dark_fusion
+from splitter_app.ui.theme import apply_muji_theme
 from splitter_app.ui.main_window import MainWindow
 from splitter_app.controllers import SplitterController
 from splitter_app.services.drive import download_csv, upload_csv
@@ -17,7 +17,7 @@ def main():
     """
     # 1) Create the QApplication early so we can show message boxes
     app = QApplication(sys.argv)
-    apply_dark_fusion(app)
+    apply_muji_theme(app)
 
     # 2) First-run: make sure we have a token.json, then sync down with Drive
     try:
