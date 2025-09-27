@@ -19,6 +19,12 @@ def ensure_credentials() -> str:
     """
     Make sure we have a valid token.json in the user config dir.
     Returns the path to the credentials file to use.
+    
+    This function handles the OAuth flow robustly:
+    - If no credentials exist, triggers new OAuth flow
+    - If credentials exist but are invalid, attempts token refresh
+    - If refresh fails (e.g., invalid_grant errors), falls back to new OAuth flow
+    - Ensures the app continues to work even with expired/invalid refresh tokens
     """
     # confirm which file it's reading
     # print("Using CLIENT_SECRETS_FILE:", CLIENT_SECRETS_FILE)
