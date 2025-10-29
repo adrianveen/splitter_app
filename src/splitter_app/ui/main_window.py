@@ -1,12 +1,27 @@
 # src/splitter_app/ui/main_window.py
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QPushButton,
-    QTableWidget, QGridLayout, QDateEdit, QVBoxLayout, QMessageBox,
-    QHeaderView, QDoubleSpinBox, QHBoxLayout, QFrame
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QGridLayout,
+    QDateEdit,
+    QVBoxLayout,
+    QMessageBox,
+    QHeaderView,
+    QDoubleSpinBox,
+    QHBoxLayout,
+    QFrame,
 )
+from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, QDate, Signal
-from splitter_app.version import __version__
+from .theme import apply_dark_fusion, apply_muji_theme
 
 class MainWindow(QMainWindow):
     """
@@ -28,8 +43,21 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Splitter App v{__version__}")
         self.setMinimumSize(800, 600)
 
+        self._create_menu()
         self._build_ui()
         self._connect_signals()
+
+    def _create_menu(self):
+        """Builds the menu bar with File/View/Edit and a dark mode toggle."""
+        menu_bar = self.menuBar()
+        menu_bar.addMenu("File")
+        view_menu = menu_bar.addMenu("View")
+        menu_bar.addMenu("Edit")
+
+        self.dark_mode_action = QAction("Dark Mode", self)
+        self.dark_mode_action.setCheckable(True)
+        self.dark_mode_action.toggled.connect(self._toggle_dark_mode)
+        view_menu.addAction(self.dark_mode_action)
 
     def _build_ui(self):
         # --- Central container & main layout ---
@@ -207,6 +235,14 @@ class MainWindow(QMainWindow):
         """Update the ower label whenever payer changes."""
         ower_frac = round(1.0 - payer_frac, 1)
         self.ower_label.setText(f"Ower: {ower_frac:.1f}")
+
+    def _toggle_dark_mode(self, checked: bool) -> None:
+        """Switch between light and dark themes based on menu action state."""
+        app = QApplication.instance()
+        if checked:
+            apply_dark_fusion(app)
+        else:
+            apply_muji_theme(app)
 
     # (Optionally, you can add methods like `set_transactions(...)`,
     #  `update_summary_text(...)`, `populate_group_summary(...)` here
