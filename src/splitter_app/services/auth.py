@@ -19,6 +19,12 @@ def ensure_credentials() -> str:
     """
     Make sure we have a valid token.json in the user config dir.
     Returns the path to the credentials file to use.
+    
+    This function handles the OAuth flow robustly:
+    - If no credentials exist, triggers new OAuth flow
+    - If credentials exist but are invalid, attempts token refresh
+    - If refresh fails (e.g., invalid_grant errors), falls back to new OAuth flow
+    - Ensures the app continues to work even with expired/invalid refresh tokens
     """
     # confirm which file it's reading
     # print("Using CLIENT_SECRETS_FILE:", CLIENT_SECRETS_FILE)
@@ -29,13 +35,26 @@ def ensure_credentials() -> str:
     # 2) Load existing token if it exists
     creds = None
     if token_path.exists():
-        try:
-            creds = Credentials.from_authorized_user_file(token_path_str, SCOPES)
-        except Exception:
-            # Corrupt/old token format; force reauth
-            creds = None
+        creds = Credentials.from_authorized_user_file(token_path_str, SCOPES)
 
-    def _save_creds(savable_creds: Credentials) -> None:
+    # 3) If no (valid) creds, run the OAuth flow
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except RefreshError:
+                # If refresh fails (e.g., invalid_grant), fall back to full OAuth flow
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    CLIENT_SECRETS_FILE, SCOPES
+                )
+                creds = flow.run_local_server(port=0)
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                CLIENT_SECRETS_FILE, SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+
+        # ensure directory exists & save the token with restricted permissions
         token_path.parent.mkdir(parents=True, exist_ok=True)
         fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
