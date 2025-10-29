@@ -3,6 +3,7 @@
 from collections import defaultdict
 from typing import List, Dict
 from PySide6.QtWidgets import QTableWidgetItem
+from splitter_app.ui.items import MoneyItem, GroupBalanceItem
 
 from splitter_app.models import Transaction
 from splitter_app.persistence import CSVRepository
@@ -116,7 +117,8 @@ class SplitterController:
             table.setItem(row, 2, QTableWidgetItem(t.paid_by))
             table.setItem(row, 3, QTableWidgetItem(t.group))
             table.setItem(row, 4, QTableWidgetItem(t.date))
-            table.setItem(row, 5, QTableWidgetItem(f"{t.amount:.2f}"))
+            # Amount: show currency but sort numerically
+            table.setItem(row, 5, MoneyItem(t.amount))
             table.setItem(row, 6, QTableWidgetItem(t.category))
             table.setItem(row, 7, QTableWidgetItem(f"{t.split:.1f}"))
 
@@ -224,12 +226,13 @@ class SplitterController:
                 paid = paid_summary[group].get(p, 0.0)
                 bal = paid - owed
                 totals[p] += bal
-                text = f"-${abs(bal):.2f}" if bal < 0 else f"${bal:.2f}"
-                table.setItem(row, col, QTableWidgetItem(text))
+                # Use custom item to sort numerically; descending produces desired order
+                table.setItem(row, col, GroupBalanceItem(
+                    value=bal,
+                ))
 
         total_row = rows
         table.setItem(total_row, 0, QTableWidgetItem("Total"))
         for col, p in enumerate(PARTICIPANTS, start=1):
             bal = totals[p]
-            text = f"-${abs(bal):.2f}" if bal < 0 else f"${bal:.2f}"
-            table.setItem(total_row, col, QTableWidgetItem(text))
+            table.setItem(total_row, col, GroupBalanceItem(value=bal))
