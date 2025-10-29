@@ -1,6 +1,7 @@
 import pytest
 from splitter_app.ui.main_window import MainWindow
-from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem
+from splitter_app.version import __version__
+from PySide6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import QDate
 
 @pytest.fixture(scope="session")
@@ -76,3 +77,38 @@ def test_on_delete_clicked_emits_serial(app):
     win._on_delete_clicked()
 
     assert captured.get('sn') == serial
+
+
+def test_group_summary_table_sorting_enabled(app):
+    win = MainWindow(["A", "B"], ["Cat"])
+    assert win.group_summary_table.isSortingEnabled()
+
+
+def test_dark_mode_action_toggles_theme(app, monkeypatch):
+    win = MainWindow(["A", "B"], ["Cat"])
+
+    called = {"mode": None}
+    monkeypatch.setattr(
+        "splitter_app.ui.main_window.apply_dark_fusion",
+        lambda a: called.update(mode="dark"),
+    )
+    monkeypatch.setattr(
+        "splitter_app.ui.main_window.apply_muji_theme",
+        lambda a: called.update(mode="light"),
+    )
+
+    win.dark_mode_action.setChecked(True)
+    assert called["mode"] == "dark"
+    win.dark_mode_action.setChecked(False)
+    assert called["mode"] == "light"
+def test_window_title_has_current_version(app):
+    win = MainWindow(["Alice", "Bob"], ["Cat"])
+    assert win.windowTitle() == f"Splitter App v{__version__}"
+
+
+def test_transaction_table_columns_resizable(app):
+    win = MainWindow(["Alice", "Bob"], ["Cat"])
+    header = win.table.horizontalHeader()
+    for col in range(win.table.columnCount()):
+        assert header.sectionResizeMode(col) == QHeaderView.ResizeMode.Interactive
+

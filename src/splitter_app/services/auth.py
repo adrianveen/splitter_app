@@ -56,12 +56,39 @@ def ensure_credentials() -> str:
 
         # ensure directory exists & save the token with restricted permissions
         token_path.parent.mkdir(parents=True, exist_ok=True)
-        # create the file with mode 0o600 to avoid exposing credentials
         fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(creds.to_json())
-        # in case the file already existed, force permissions to 600
+            f.write(savable_creds.to_json())
         os.chmod(token_path, 0o600)
+
+    # 3) Ensure creds are valid and cover required scopes
+    need_reauth = False
+    if creds:
+        try:
+            # If token missing required scopes, reauth
+            if SCOPES and (not creds.scopes or any(scope not in creds.scopes for scope in SCOPES)):
+                need_reauth = True
+            elif not creds.valid:
+                if creds.expired and creds.refresh_token:
+                    try:
+                        creds.refresh(Request())
+                    except RefreshError:
+                        # Common when scopes changed (invalid_scope) — force re-consent
+                        need_reauth = True
+                else:
+                    need_reauth = True
+        except Exception:
+            # Any unexpected issue reading/refreshing -> reauth
+            need_reauth = True
+    else:
+        need_reauth = True
+
+    if need_reauth:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+        _save_creds(creds)
 
     # 4) Monkey-patch config.CREDENTIALS_FILE so download/upload use the new token
     _config.CREDENTIALS_FILE = token_path_str
