@@ -1,22 +1,22 @@
 # src/splitter_app/persistence.py
-"""
-CSV-based repository for storing and loading transactions.
+"""CSV-based repository for storing and loading transactions.
+
 Handles reading, appending, and deleting entries in the CSV file.
 Adds support for legacy CSV formats with split descriptions.
 """
+
 import csv
-import os
 import re
 from contextlib import contextmanager
-from typing import List
+from pathlib import Path
+from typing import IO, Any, Generator  # noqa: UP035
 
-from splitter_app.models import Transaction
 from splitter_app.config import PARTICIPANTS
-
+from splitter_app.models import Transaction
 
 # Cross-platform file locking shim: use fcntl on POSIX, msvcrt on Windows
 try:  # pragma: no cover - platform dependent
-    import fcntl as _fcntl  # type: ignore
+    import fcntl as _fcntl
 
     class _FcntlProxy:
         LOCK_SH = _fcntl.LOCK_SH
@@ -24,7 +24,7 @@ try:  # pragma: no cover - platform dependent
         LOCK_UN = _fcntl.LOCK_UN
 
         @staticmethod
-        def flock(file_obj, lock_flag):
+        def flock(file_obj, lock_flag):  # noqa: ANN001
             _fcntl.flock(file_obj, lock_flag)
 
     fcntl = _FcntlProxy()  # exposed name matches POSIX usage
@@ -38,7 +38,7 @@ except Exception:  # Windows: provide best-effort locking via msvcrt
         LOCK_UN = 8
 
         @staticmethod
-        def flock(file_obj, lock_flag):
+        def flock(file_obj, lock_flag) -> None:
             # Best-effort: treat shared/exclusive as an exclusive region lock.
             # Lock/unlock 1 byte from start of file. Ignore failures gracefully.
             try:
@@ -58,38 +58,34 @@ except Exception:  # Windows: provide best-effort locking via msvcrt
 
 
 class CSVRepository:
-    """
-    A repository that uses a CSV file as its backend storage.
-    """
+    """A repository that uses a CSV file as its backend storage."""
 
     def __init__(self, csv_path: str) -> None:
-        """
-        :param csv_path: Path to the CSV file storing transactions.
-        """
+        """:param csv_path: Path to the CSV file storing transactions."""
         self.csv_path = csv_path
 
     @contextmanager
-    def _open_locked(self, mode: str, lock: int):
+    def _open_locked(self, mode: str, lock: int) -> Generator[IO[Any], Any]:
         """Open *csv_path* applying an advisory file lock."""
         # Ensure directory exists before attempting to open
-        os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
-        with open(self.csv_path, mode, newline='', encoding='utf-8') as f:
+        Path.mkdir(Path(self.csv_path).parent, exist_ok=True)
+        with open(self.csv_path, mode, newline="", encoding="utf-8") as f:
             fcntl.flock(f, lock)
             try:
                 yield f
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
 
-    def load_all(self) -> List[Transaction]:
-        """
-        Load all transactions from the CSV file, handling both new and legacy formats.
+    def load_all(self) -> list[Transaction]:
+        """Load all transactions from the CSV file, handling both new and legacy formats.
+
         Returns an empty list if the file does not exist or is empty.
         """
-        if not os.path.exists(self.csv_path):
+        if not Path(self.csv_path).exists():
             return []
 
-        transactions: List[Transaction] = []
-        with self._open_locked('r', fcntl.LOCK_SH) as f:
+        transactions: list[Transaction] = []
+        with self._open_locked("r", fcntl.LOCK_SH) as f:
             reader = csv.reader(f)
             for row in reader:
                 if not row:
@@ -102,9 +98,19 @@ class CSVRepository:
                     except (ValueError, IndexError):
                         txn = None
                 if txn is None:
-                    # Fallback: legacy format [serial, desc, paid_by, group, date, amount, category, split_label]
+                    # Fallback: legacy format [serial, desc, paid_by,
+                    #   group, date, amount, category, split_label]
                     try:
-                        serial, desc, paid_by, group, date, amount_str, category, split_label = row[:8]
+                        (
+                            serial,
+                            desc,
+                            paid_by,
+                            group,
+                            date,
+                            amount_str,
+                            category,
+                            split_label,
+                        ) = row[:8]
                         amount = float(amount_str)
                         # Parse a fraction in parentheses, e.g. "Even (1/2 each)"
                         m = re.search(r"\((\d+)/(\d+)", split_label)
@@ -132,23 +138,23 @@ class CSVRepository:
         return transactions
 
     def save(self, txn: Transaction) -> None:
-        """
-        Append a single transaction to the CSV file.
+        """Append a single transaction to the CSV file.
+
         Creates the file if it does not exist.
         """
-        with self._open_locked('a', fcntl.LOCK_EX) as f:
+        with self._open_locked("a", fcntl.LOCK_EX) as f:
             writer = csv.writer(f)
             writer.writerow(txn.to_csv_row())
 
     def delete(self, serial_number: str) -> None:
-        """
-        Delete a transaction by its serial number.
+        """Delete a transaction by its serial number.
+
         Rewrites the CSV file without the matching entry.
         """
         transactions = self.load_all()
         remaining = [t for t in transactions if t.serial_number != serial_number]
 
-        with self._open_locked('w', fcntl.LOCK_EX) as f:
+        with self._open_locked("w", fcntl.LOCK_EX) as f:
             writer = csv.writer(f)
             for t in remaining:
                 writer.writerow(t.to_csv_row())

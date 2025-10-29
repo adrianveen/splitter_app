@@ -1,12 +1,11 @@
-# src/splitter_app/models.py
+"""# src/splitter_app/models.py."""
 
 from dataclasses import dataclass
-from typing import List
+
 
 @dataclass
 class Transaction:
-    """
-    Represents a financial transaction entry.
+    """Represents a financial transaction entry.
 
     Attributes:
         serial_number: Unique code (e.g. "A001").
@@ -17,7 +16,9 @@ class Transaction:
         category: Transaction category (e.g. "Food & Drinks").
         split: Fraction paid by the payer (0.0–1.0).
         amount: Transaction amount in CAD.
+
     """
+
     serial_number: str
     description: str
     paid_by: str
@@ -28,10 +29,10 @@ class Transaction:
     amount: float
 
     @classmethod
-    def from_csv_row(cls, row: List[str]) -> 'Transaction':
-        """
-        Create a Transaction from a list of CSV strings.
-        Expected format: [serial, desc, paid_by, date, group, category, split, amount]
+    def from_csv_row(cls, row: list[str]) -> "Transaction":
+        """Create a Transaction from a list of CSV strings.
+
+        Expected format: [serial, desc, paid_by, date, group, category, split, amount].
         """
         return cls(
             serial_number=row[0],
@@ -44,10 +45,8 @@ class Transaction:
             amount=float(row[7]),
         )
 
-    def to_csv_row(self) -> List[str]:
-        """
-        Export the Transaction to a list of strings for CSV writing.
-        """
+    def to_csv_row(self) -> list[str]:
+        """Export the Transaction to a list of strings for CSV writing."""
         return [
             self.serial_number,
             self.description,

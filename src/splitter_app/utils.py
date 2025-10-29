@@ -1,7 +1,7 @@
-# src/splitter_app/utils.py
+"""# src/splitter_app/utils.py."""
 
 import sys
-import os
+from pathlib import Path
 
 
 def _validate_relative(base: str, rel: str) -> str:
@@ -13,27 +13,29 @@ def _validate_relative(base: str, rel: str) -> str:
     :raises ValueError: if the resolved path escapes the base directory.
     :return: The absolute, normalised path.
     """
-    rel_norm = os.path.normpath(rel)
+    base_abs = Path(base).resolve()
     # Join and normalise to an absolute path
-    full_path = os.path.abspath(os.path.join(base, rel_norm))
-    base_abs = os.path.abspath(base)
-    if os.path.commonpath([base_abs, full_path]) != base_abs:
-        raise ValueError("Relative path escapes base directory")
-    return full_path
+    full_path = (base_abs / rel).resolve()
+
+    # Check if full_path is relative to base_abs (i.e., within the base directory)
+    try:
+        full_path.relative_to(base_abs)
+    except ValueError:
+        msg = "Relative path escapes base directory"
+        raise ValueError(msg) from None
+
+    return str(full_path)
+
 
 def resource_path(relative_path: str) -> str:
-    """
-    Get the absolute path to a resource, works for development and PyInstaller bundles.
+    """Get the absolute path to a resource, works for development and PyInstaller bundles.
 
     :param relative_path: Path relative to the resources directory or project root.
     :return: Absolute filesystem path to the resource.
     """
     # PyInstaller stores data files in a temp folder referenced by _MEIPASS
     meipass = getattr(sys, "_MEIPASS", None)
-    if meipass:
-        base_path = meipass
-    else:
-        # Use the directory where this utils.py file resides
-        base_path = os.path.abspath(os.path.dirname(__file__))
 
-    return _validate_relative(base_path, relative_path)
+    base_path = meipass or Path(__file__).parent.resolve()
+
+    return _validate_relative(str(base_path), relative_path)

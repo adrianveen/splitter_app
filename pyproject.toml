@@ -16,12 +16,20 @@ dependencies = [
     "pytest",
     "pyinstaller",
     "pyside6>=6.6.2",
+    "ruff",
 ]
 
 [tool.ruff]
 line-length = 88
 lint.extend-select = ["PTH", "NPY", "N8", "E", "ALL"]
-lint.ignore = ["T2"]
+lint.ignore = [
+    "T2",
+    "D203",  # Conflicts with D211 (blank line before class)
+    "D213",  # Conflicts with D212 (multi-line docstring summary)
+    "A", # Type annotations - far too many right now
+    "ANN", # More type annotations
+    "D",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

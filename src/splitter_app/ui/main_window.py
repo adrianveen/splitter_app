@@ -3,6 +3,7 @@
 from PySide6.QtCore import QDate, Qt, Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
+    QApplication,
     QComboBox,
     QDateEdit,
     QDoubleSpinBox,
@@ -21,22 +22,30 @@ from PySide6.QtWidgets import (
 )
 
 from splitter_app.version import __version__
+
 from .theme import apply_dark_fusion, apply_muji_theme
 
 
 class MainWindow(QMainWindow):
-    """
-    The pure-UI layer for the Contribution Splitter.
+    """The pure-UI layer for the Contribution Splitter.
+
     Emits:
       - transaction_added(dict): when the user clicks “Add Transaction”
-      - transaction_deleted(str): serial_number of the entry to delete
+      - transaction_deleted(str): serial_number of the entry to delete.
     """
+
     transaction_added = Signal(dict)
     transaction_deleted = Signal(str)
 
-    def __init__(self, 
-                 participants: list[str],
-                 categories: list[str]):
+    def __init__(self, participants: list[str], categories: list[str]) -> None:
+        """Docstring for __init__.
+
+        :param self: Description
+        :param participants: Description
+        :type participants: list[str]
+        :param categories: Description
+        :type categories: list[str]
+        """
         super().__init__()
         self.participants = participants
         self.transactions_cat = categories
@@ -48,8 +57,8 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._connect_signals()
 
-    def _create_menu(self):
-        """Builds the menu bar with File/View/Edit and a dark mode toggle."""
+    def _create_menu(self) -> None:
+        """Build the menu bar with File/View/Edit and a dark mode toggle."""
         menu_bar = self.menuBar()
         menu_bar.addMenu("File")
         view_menu = menu_bar.addMenu("View")
@@ -60,7 +69,7 @@ class MainWindow(QMainWindow):
         self.dark_mode_action.toggled.connect(self._toggle_dark_mode)
         view_menu.addAction(self.dark_mode_action)
 
-    def _build_ui(self):
+    def _build_ui(self) -> None:
         # --- Central container & main layout ---
         container = QWidget()
         self.setCentralWidget(container)
@@ -133,11 +142,13 @@ class MainWindow(QMainWindow):
         self.payer_spin.setSingleStep(0.1)
         self.payer_spin.setDecimals(1)
         self.payer_spin.setMinimumWidth(80)
-        self.payer_spin.setValue(0.5)   # narrow it down so label fits
+        self.payer_spin.setValue(0.5)  # narrow it down so label fits
         split_hbox.addWidget(self.payer_spin)
 
         self.ower_label = QLabel("Ower: 0.5")
-        self.ower_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.ower_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+        )
         split_hbox.addWidget(self.ower_label)
 
         split_hbox.addStretch()  # push everything left within that cell
@@ -157,10 +168,18 @@ class MainWindow(QMainWindow):
         # --- TRANSACTIONS TABLE ---
         self.table = QTableWidget()
         self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels([
-            "serial_number", "Description", "Paid By", "Group",
-            "Date", "Amount", "Category", "Split"
-        ])
+        self.table.setHorizontalHeaderLabels(
+            [
+                "serial_number",
+                "Description",
+                "Paid By",
+                "Group",
+                "Date",
+                "Amount",
+                "Category",
+                "Split",
+            ]
+        )
         self.table.setColumnHidden(0, True)  # hide serial internally
         hdr = self.table.horizontalHeader()
         # Allow per-column resizing and fill remaining space
@@ -178,7 +197,9 @@ class MainWindow(QMainWindow):
         summary_layout = QHBoxLayout(summary_frame)
         summary_layout.setContentsMargins(12, 12, 12, 12)
         self.summary_label = QLabel("No transactions yet.")
-        self.summary_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.summary_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
+        )
         self.summary_label.setWordWrap(True)
         summary_layout.addWidget(self.summary_label)
         summary_layout.addStretch()
@@ -191,7 +212,7 @@ class MainWindow(QMainWindow):
         # initially 3 columns: Group + 2 people; controller can reset cols later
         self.group_summary_table.setColumnCount(3)
         self.group_summary_table.setHorizontalHeaderLabels(
-            ["Group"] + self.participants
+            ["Group", *self.participants],
         )
         hdr2 = self.group_summary_table.horizontalHeader()
         for col in range(self.group_summary_table.columnCount()):
@@ -200,14 +221,15 @@ class MainWindow(QMainWindow):
         self.group_summary_table.setSortingEnabled(True)
         main_layout.addWidget(self.group_summary_table)
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         self.add_button.clicked.connect(self._on_add_clicked)
         self.delete_button.clicked.connect(self._on_delete_clicked)
 
-    def _on_add_clicked(self):
-        """
-        Collects form data and emits transaction_added.
+    def _on_add_clicked(self) -> None:
+        """Collect form data and emits transaction_added.
+
         The controller should listen and handle CSV + table + summary updates.
+
         """
         data = {
             "description": self.desc_input.text().strip(),
@@ -220,37 +242,47 @@ class MainWindow(QMainWindow):
         }
         self.transaction_added.emit(data)
 
-    def _on_delete_clicked(self):
-        """
-        Emits transaction_deleted with the serial_number of the selected row.
-        """
+    def _on_delete_clicked(self) -> None:
+        """Emit transaction_deleted with the serial_number of the selected row."""
         if self.table.selectedItems():
             sn = self.table.item(self.table.currentRow(), 0).text()
             self.transaction_deleted.emit(sn)
         else:
-            QMessageBox.warning(self, "No Entry Selected",
-                                "Please select an entry to delete.",
-                                QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel)
-        
-    def _on_split_changed(self, payer_frac: float):
+            QMessageBox.warning(
+                self,
+                "No Entry Selected",
+                "Please select an entry to delete.",
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Cancel,
+            )
+
+    def _on_split_changed(self, payer_frac: float) -> None:
         """Update the ower label whenever payer changes."""
         ower_frac = round(1.0 - payer_frac, 1)
         self.ower_label.setText(f"Ower: {ower_frac:.1f}")
 
     def _toggle_dark_mode(self, checked: bool) -> None:
-        """Switch between light and dark themes based on menu action state."""
-        app = QApplication.instance()
+        """Switch between light and dark themes based on menu action state.
+
+        Note: Theme changes may not be fully visible until the window is
+        minimized/restored due to Qt6 refresh limitations.
+        """
+        app_instance = QApplication.instance()
+        if app_instance is None or not isinstance(app_instance, QApplication):
+            return
         if checked:
-            apply_dark_fusion(app)
+            apply_dark_fusion(app_instance)
         else:
-            apply_muji_theme(app)
+            apply_muji_theme(app_instance)
 
     # (Optionally, you can add methods like `set_transactions(...)`,
     #  `update_summary_text(...)`, `populate_group_summary(...)` here
     #  to let your controller push data back into the UI.)
 
+
 if __name__ == "__main__":
     import sys
+
     from PySide6.QtWidgets import QApplication
 
     # Dummy data just for layout preview

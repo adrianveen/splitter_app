@@ -1,39 +1,40 @@
 # src/splitter_app/controllers.py
 
 from collections import defaultdict
-from typing import List, Dict
-from PySide6.QtWidgets import QTableWidgetItem
-from splitter_app.ui.items import MoneyItem, GroupBalanceItem
 
-from splitter_app.models import Transaction
-from splitter_app.persistence import CSVRepository
+from PySide6.QtWidgets import QTableWidgetItem
+
 from splitter_app.config import (
+    CATEGORY_MAP,
     LOCAL_CSV_PATH,
     PARTICIPANTS,
-    CATEGORY_MAP,
 )
+from splitter_app.models import Transaction
+from splitter_app.persistence import CSVRepository
+from splitter_app.ui.items import GroupBalanceItem, MoneyItem
 
 
 class SplitterController:
-    """
-    Controller for the Contribution Splitter app.
+    """Controller for the Contribution Splitter app.
+
     Connects the UI (MainWindow) signals to business logic,
     manages transactions via CSVRepository, and updates the UI.
     """
 
-    def __init__(self, window):
+    def __init__(self, window) -> None:
+        """Set controller constructor."""
         self.window = window
         self.repo = CSVRepository(LOCAL_CSV_PATH)
         # Connect UI signals to controller methods
         window.transaction_added.connect(self.add_transaction)
         window.transaction_deleted.connect(self.delete_transaction)
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Load initial data from CSV and update the UI."""
         txns = self.repo.load_all()
         self._refresh_view(txns)
 
-    def add_transaction(self, data: dict):
+    def add_transaction(self, data: dict) -> None:
         """Create Transaction, save it, and refresh UI."""
         serial = self._generate_serial(data["category"])
         txn = Transaction(
@@ -49,7 +50,7 @@ class SplitterController:
         self.repo.save(txn)
         self._refresh_view(self.repo.load_all())
 
-    def delete_transaction(self, serial_number: str):
+    def delete_transaction(self, serial_number: str) -> None:
         """Delete by serial_number and refresh UI."""
         self.repo.delete(serial_number)
         self._refresh_view(self.repo.load_all())
@@ -59,10 +60,10 @@ class SplitterController:
         amount: float,
         split: float,
         payer: str,
-        participants: List[str],
-    ) -> Dict[str, float]:
-        """
-        Allocate `amount` among participants based on `split`:
+        participants: list[str],
+    ) -> dict[str, float]:
+        """Allocate `amount` among participants based on `split`.
+
         - payer gets `round(amount * split, 2)`
         - the remaining is split equally (and rounded) among the others,
           with the last ower absorbing any tiny rounding diff
@@ -70,7 +71,7 @@ class SplitterController:
         """
         # Include the payer in the share map even if they are not listed in
         # participants to avoid misallocation.
-        shares = {p: 0.0 for p in participants}
+        shares = dict.fromkeys(participants, 0.0)
         if payer not in shares:
             shares[payer] = 0.0
 
@@ -81,7 +82,7 @@ class SplitterController:
             shares[payer] = round(amount, 2)
             return shares
 
-        # 1) Payer’s portion
+        # 1) Payer's portion
         raw_payer = amount * split
         payer_amt = round(raw_payer, 2)
         shares[payer] = payer_amt
@@ -102,7 +103,7 @@ class SplitterController:
 
         return shares
 
-    def _refresh_view(self, txns: List[Transaction]):
+    def _refresh_view(self, txns: list[Transaction]) -> None:
         """Populate the transactions table, summary label, and group summary."""
         # 1) Transactions table
         table = self.window.table
@@ -134,7 +135,7 @@ class SplitterController:
             self.window.summary_label.setText(f"Total: ${total:.2f}")
         else:
             # Compute net balance = what each paid minus what each owes
-            net_balances = {p: 0.0 for p in participants}
+            net_balances = dict.fromkeys(participants, 0.0)
             for t in txns:
                 # 1) Credit the payer for the full amount
                 net_balances[t.paid_by] += t.amount
@@ -160,17 +161,16 @@ class SplitterController:
             self.window.summary_label.setText("\n".join(parts))
 
         # 3) Group summary (shares vs paid → net balance)
-        from collections import defaultdict  # should already be at top of file
+        # should already be at top of file
 
         share_summary = self._calculate_group_summary(txns)
         # Build per-group “paid” totals
-        paid_summary = defaultdict(lambda: {p: 0.0 for p in PARTICIPANTS})
+        paid_summary = defaultdict(lambda: dict.fromkeys(PARTICIPANTS, 0.0))
         for t in txns:
             paid_summary[t.group][t.paid_by] += t.amount
 
         # Populate with both owed (share_summary) and paid → net
         self._populate_group_summary(share_summary, paid_summary)
-
 
     def _generate_serial(self, category: str) -> str:
         """Generate a new serial_number based on category map and existing txns."""
@@ -180,15 +180,16 @@ class SplitterController:
         return f"{letter}{next_num:03d}"
 
     def _calculate_group_summary(
-        self, txns: List[Transaction]
-    ) -> Dict[str, Dict[str, float]]:
-        """
-        Build a dict of group → (participant → total_share)
+        self,
+        txns: list[Transaction],
+    ) -> dict[str, dict[str, float]]:
+        """Build a dict of group → (participant → total_share).
+
         reusing the same allocation logic to keep it consistent.
         """
         participants = PARTICIPANTS
-        summary: Dict[str, Dict[str, float]] = defaultdict(
-            lambda: {p: 0.0 for p in participants}
+        summary: dict[str, dict[str, float]] = defaultdict(
+            lambda: dict.fromkeys(participants, 0.0),
         )
 
         for t in txns:
@@ -205,19 +206,19 @@ class SplitterController:
 
     def _populate_group_summary(
         self,
-        share_summary: Dict[str, Dict[str, float]],
-        paid_summary: Dict[str, Dict[str, float]],
-    ):
-        """
-        Update the group summary table in the UI:
-        for each (group, participant) show net balance = paid – owed,
+        share_summary: dict[str, dict[str, float]],
+        paid_summary: dict[str, dict[str, float]],
+    ) -> None:
+        """Update the group summary table in the UI.
+
+        for each (group, participant) show net balance = paid - owed,
         formatted as “-$xx.xx” if negative, “$xx.xx” if ≥0.
         """
         table = self.window.group_summary_table
         rows = len(share_summary)
         table.setRowCount(rows + 1)
 
-        totals = {p: 0.0 for p in PARTICIPANTS}
+        totals = dict.fromkeys(PARTICIPANTS, 0.0)
 
         for row, (group, owed_map) in enumerate(share_summary.items()):
             table.setItem(row, 0, QTableWidgetItem(group))
@@ -227,9 +228,13 @@ class SplitterController:
                 bal = paid - owed
                 totals[p] += bal
                 # Use custom item to sort numerically; descending produces desired order
-                table.setItem(row, col, GroupBalanceItem(
-                    value=bal,
-                ))
+                table.setItem(
+                    row,
+                    col,
+                    GroupBalanceItem(
+                        value=bal,
+                    ),
+                )
 
         total_row = rows
         table.setItem(total_row, 0, QTableWidgetItem("Total"))

@@ -1,16 +1,18 @@
 # src/splitter_app/config.py
-"""
-Central configuration for the Contribution Splitter app:
+"""Central configuration for the Contribution Splitter app.
+
 - Google Drive integration constants
 - Local file paths
 - Default participants and categories
 - Category-to-letter mapping for serial numbers
-- Support for loading OAuth credentials from an external path via env var or default config location
+- Support for loading OAuth credentials from an external path
+    via env var or default config location.
 """
+
 import os
 from pathlib import Path
-from splitter_app.utils import resource_path
 
+from splitter_app.utils import resource_path
 
 # at the top, after your imports
 SCOPES: list[str] = [
@@ -26,7 +28,9 @@ _env_client_secrets = os.getenv(ENV_CLIENT_SECRETS_VAR)
 if _env_client_secrets:
     CLIENT_SECRETS_FILE: str = str(Path(_env_client_secrets))
 else:
-    CLIENT_SECRETS_FILE: str = os.path.normpath(resource_path("resources/credentials.json"))
+    CLIENT_SECRETS_FILE: str = os.path.normpath(
+        resource_path("resources/credentials.json")
+    )
 
 # --- Environment variable for external credentials ---
 # If set, this path overrides the default token path
@@ -36,7 +40,9 @@ ENV_CREDENTIALS_VAR = "GOOGLE_TOKEN_PATH"
 # The Drive file ID for the transactions CSV
 # You can override this per environment/session using GOOGLE_DRIVE_FILE_ID
 ENV_DRIVE_FILE_ID_VAR = "GOOGLE_DRIVE_FILE_ID"
-DRIVE_FILE_ID: str = os.getenv(ENV_DRIVE_FILE_ID_VAR) or "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
+DRIVE_FILE_ID: str = (
+    os.getenv(ENV_DRIVE_FILE_ID_VAR) or "1UNCEKJkpZ0nLDauX4Z2S_p01e64Th_wV"
+)
 
 # --- Google Sheets Settings ---
 # Optional spreadsheet ID and range for reading transactions directly from Sheets
@@ -77,7 +83,7 @@ TRANSACTION_CATEGORIES: list[str] = [
 # Mapping from transaction category to serial-code letter
 CATEGORY_MAP: dict[str, str] = {
     "Food & Drinks": "A",
-    "Travel":        "B",
-    "Groceries":     "C",
-    "Other":         "D",
+    "Travel": "B",
+    "Groceries": "C",
+    "Other": "D",
 }

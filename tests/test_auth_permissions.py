@@ -1,5 +1,6 @@
 import os
 import stat
+from pathlib import Path
 from unittest import mock
 
 from splitter_app.services import auth
@@ -21,10 +22,16 @@ def test_token_saved_with_strict_permissions(tmp_path, monkeypatch):
         flow.run_local_server.return_value = dummy_creds
         return flow
 
-    monkeypatch.setattr(auth.Credentials, "from_authorized_user_file", staticmethod(fake_from_file))
-    monkeypatch.setattr(auth.InstalledAppFlow, "from_client_secrets_file", staticmethod(fake_flow_from_client_secrets_file))
+    monkeypatch.setattr(
+        auth.Credentials, "from_authorized_user_file", staticmethod(fake_from_file)
+    )
+    monkeypatch.setattr(
+        auth.InstalledAppFlow,
+        "from_client_secrets_file",
+        staticmethod(fake_flow_from_client_secrets_file),
+    )
 
     path = auth.ensure_credentials()
-    assert os.path.exists(path)
+    assert Path(path).exists()
     mode = stat.S_IMODE(os.stat(path).st_mode)
     assert mode == 0o600

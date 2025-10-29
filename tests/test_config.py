@@ -1,7 +1,7 @@
 import importlib
 from pathlib import Path
 
-import splitter_app.config as config
+from splitter_app import config
 
 
 def test_credentials_file_defaults_to_config_dir(tmp_path, monkeypatch):
@@ -17,7 +17,7 @@ def test_credentials_file_defaults_to_config_dir(tmp_path, monkeypatch):
     importlib.reload(config)
 
     expected = tmp_path / ".config" / "splitter_app" / "token.json"
-    assert config.CREDENTIALS_FILE == str(expected)
+    assert str(expected) == config.CREDENTIALS_FILE
 
     # Optional: restore module to a clean state for other tests
     importlib.reload(config)
@@ -32,7 +32,7 @@ def test_credentials_file_uses_env_path_even_if_missing(tmp_path, monkeypatch):
 
     importlib.reload(config)
 
-    assert config.CREDENTIALS_FILE == str(env_path)
+    assert str(env_path) == config.CREDENTIALS_FILE
 
     # Cleanup: remove override and restore module
     monkeypatch.delenv("GOOGLE_TOKEN_PATH", raising=False)

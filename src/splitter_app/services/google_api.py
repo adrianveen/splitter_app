@@ -1,28 +1,43 @@
-# src/splitter_app/services/google_api.py  (keep the filename you use now)
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
+"""# src/splitter_app/services/google_api.py  (keep the filename you use now)."""
+
 import io
+from pathlib import Path
+from typing import Any
 
-def _service(credentials_path):
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+
+
+def _service(credentials_path: Path) -> Any:
     creds = Credentials.from_authorized_user_file(credentials_path)
-    return build('drive', 'v3', credentials=creds)
+    return build("drive", "v3", credentials=creds)
 
-def _whoami(service):
+
+def _whoami(service) -> tuple[Any, Any]:
     # Works with Drive scope: returns the authed user email/display name
-    about = service.about().get(fields='user(displayName,emailAddress)').execute()
-    return about['user']['emailAddress'], about['user']['displayName']
+    about = service.about().get(fields="user(displayName,emailAddress)").execute()
+    return about["user"]["emailAddress"], about["user"]["displayName"]
 
-def _assert_file_accessible(service, file_id: str):
+
+def _assert_file_accessible(service, file_id: str) -> Any:
     # Preflight: verify the file exists *and* the authed user can see it.
-    return service.files().get(
-        fileId=file_id,
-        supportsAllDrives=True,
-        fields='id,name,driveId,owners(emailAddress,displayName),permissions'
-    ).execute()
+    return (
+        service.files()
+        .get(
+            fileId=file_id,
+            supportsAllDrives=True,
+            fields="id,name,driveId,owners(emailAddress,displayName),permissions",
+        )
+        .execute()
+    )
 
-def upload_to_drive(drive_file_id, local_file_path, credentials_path):
+
+def upload_to_drive(
+    drive_file_id: str, local_file_path: Path, credentials_path: Path
+) -> None:
+    """Upload a file to Drive."""
     service = _service(credentials_path)
     email, _ = _whoami(service)
 
@@ -30,31 +45,45 @@ def upload_to_drive(drive_file_id, local_file_path, credentials_path):
         _assert_file_accessible(service, drive_file_id)
     except HttpError as e:
         if e.resp.status == 404:
-            raise FileNotFoundError(
+            msg = (
                 f"Drive file '{drive_file_id}' not found or not shared with {email}. "
                 "If the file lives in a Shared Drive, ensure `supportsAllDrives=True` "
                 "is used (it is), and that this user has at least Editor access."
+            )
+            raise FileNotFoundError(
+                msg,
             ) from e
         raise
 
-    media_body = MediaFileUpload(local_file_path, mimetype='text/csv')
+    media_body = MediaFileUpload(local_file_path, mimetype="text/csv")
     try:
-        updated = service.files().update(
-            fileId=drive_file_id,
-            media_body=media_body,
-            fields='id',
-            supportsAllDrives=True
-        ).execute()
+        updated = (
+            service.files()
+            .update(
+                fileId=drive_file_id,
+                media_body=media_body,
+                fields="id",
+                supportsAllDrives=True,
+            )
+            .execute()
+        )
     except HttpError as e:
         if e.resp.status in (403, 404):
-            raise PermissionError(
+            msg = (
                 f"Update failed for '{drive_file_id}' as {email}. "
                 "Check sharing and scope."
+            )
+            raise PermissionError(
+                msg,
             ) from e
         raise
     print(f"Updated file ID: {updated.get('id')}")
 
-def download_from_drive(file_id, output_path, credentials_path):
+
+def download_from_drive(
+    file_id: str, output_path: Path, credentials_path: Path
+) -> None:
+    """Download a file from Drive."""
     service = _service(credentials_path)
     email, _ = _whoami(service)
 
@@ -63,13 +92,14 @@ def download_from_drive(file_id, output_path, credentials_path):
         print(f"Downloading '{meta['name']}' (id={meta['id']}) as {email}")
     except HttpError as e:
         if e.resp.status == 404:
+            msg = f"Drive file '{file_id}' not found or not shared with {email}."
             raise FileNotFoundError(
-                f"Drive file '{file_id}' not found or not shared with {email}."
+                msg,
             ) from e
         raise
 
     request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
-    with io.FileIO(output_path, 'wb') as fh:
+    with io.FileIO(output_path, "wb") as fh:
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while not done:
@@ -79,10 +109,12 @@ def download_from_drive(file_id, output_path, credentials_path):
     print(f"Downloaded to {output_path}")
 
 
-def read_sheet(spreadsheet_id, range_name, credentials_path):
+def read_sheet(
+    spreadsheet_id: str, range_name: str, credentials_path: Path
+) -> list[list[Any]]:
     """Return values from a Google Sheet range."""
     creds = Credentials.from_authorized_user_file(credentials_path)
-    service = build('sheets', 'v4', credentials=creds)
+    service = build("sheets", "v4", credentials=creds)
     result = (
         service.spreadsheets()
         .values()

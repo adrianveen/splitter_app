@@ -1,9 +1,9 @@
 import pytest
 
+import splitter_app.main as main_module
+
 
 def test_request_access_link_opened(monkeypatch):
-    import splitter_app.main as main_module
-
     # Stub out application and UI setup
     class DummyApp:
         def __init__(self, *args, **kwargs):
@@ -19,7 +19,8 @@ def test_request_access_link_opened(monkeypatch):
     monkeypatch.setattr(main_module, "ensure_credentials", lambda: "token")
 
     def fake_download():
-        raise FileNotFoundError("not shared")
+        msg = "not shared"
+        raise FileNotFoundError(msg)
 
     monkeypatch.setattr(main_module, "download_csv", fake_download)
 

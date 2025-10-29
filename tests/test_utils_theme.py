@@ -1,17 +1,21 @@
 import os
 import sys
+
 import pytest
-from splitter_app.utils import resource_path
-from splitter_app.ui.theme import apply_dark_fusion
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QPalette, QColor
+
+from splitter_app.ui.theme import apply_dark_fusion
+from splitter_app.utils import resource_path
+
 
 def test_resource_path_development(monkeypatch):
     # no _MEIPASS → base is utils.py directory
     monkeypatch.setattr(sys, "_MEIPASS", None, raising=False)
-    base = os.path.abspath(os.path.dirname(resource_path.__globals__['__file__']))
+    base = os.path.abspath(os.path.dirname(resource_path.__globals__["__file__"]))
     rel = "foo/bar.txt"
     assert resource_path(rel) == os.path.join(base, rel)
+
 
 def test_resource_path_meipass(monkeypatch):
     # with _MEIPASS → uses that directory
@@ -26,14 +30,12 @@ def test_resource_path_rejects_traversal(monkeypatch):
     with pytest.raises(ValueError):
         resource_path("../evil.txt")
 
+
 def test_apply_dark_fusion_sets_fusion_style_and_palette(monkeypatch):
     # Creating a fresh QApplication for testing
     app = QApplication.instance() or QApplication([])
     # stub out resource_path to avoid relying on package data
-    monkeypatch.setattr(
-        "splitter_app.ui.theme.resource_path",
-        lambda path: path
-    )
+    monkeypatch.setattr("splitter_app.ui.theme.resource_path", lambda path: path)
     # Should not raise even if file doesn't exist
     apply_dark_fusion(app, icon_name="irrelevant.ico")
     # Style should be Fusion
@@ -45,10 +47,7 @@ def test_apply_dark_fusion_sets_fusion_style_and_palette(monkeypatch):
 
 def test_apply_dark_fusion_missing_icon(monkeypatch, capsys):
     app = QApplication.instance() or QApplication([])
-    monkeypatch.setattr(
-        "splitter_app.ui.theme.resource_path",
-        lambda path: path
-    )
+    monkeypatch.setattr("splitter_app.ui.theme.resource_path", lambda path: path)
     # icon path doesn't exist → warning printed
     apply_dark_fusion(app, icon_name="missing.ico")
     captured = capsys.readouterr().out

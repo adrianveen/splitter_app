@@ -6,7 +6,16 @@ def test_load_transactions(monkeypatch):
     fake_range = "Sheet1!A:H"
     fake_cred = "CREDPATH"
     sample = [
-        ["A001", "Lunch", "Adrian", "2024-01-01", "general", "Food & Drinks", "0.5", "10.0"],
+        [
+            "A001",
+            "Lunch",
+            "Adrian",
+            "2024-01-01",
+            "general",
+            "Food & Drinks",
+            "0.5",
+            "10.0",
+        ],
         ["B002", "Taxi", "Vic", "2024-01-02", "general", "Travel", "1.0", "20.0"],
     ]
     monkeypatch.setattr(sheets_module.config, "SHEETS_SPREADSHEET_ID", fake_id)
