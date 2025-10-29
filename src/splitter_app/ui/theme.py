@@ -76,3 +76,8 @@ def apply_light_minimal_theme(app: QApplication, icon_name: str = "wallet-icon.i
         app.setWindowIcon(QIcon(icon_path))
     else:
         print(f"Warning: icon '{icon_path}' not found; using default icon")
+
+
+def apply_muji_theme(app: QApplication, icon_name: str = "wallet-icon.ico") -> None:
+    """Backward compatible alias for the minimalist light theme."""
+    apply_light_minimal_theme(app, icon_name)
