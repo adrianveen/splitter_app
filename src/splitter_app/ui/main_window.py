@@ -1,27 +1,28 @@
 # src/splitter_app/ui/main_window.py
 
+from PySide6.QtCore import QDate, Qt, Signal
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
+    QComboBox,
+    QDateEdit,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
-    QComboBox,
+    QMainWindow,
+    QMessageBox,
     QPushButton,
     QTableWidget,
-    QTableWidgetItem,
-    QGridLayout,
-    QDateEdit,
     QVBoxLayout,
-    QMessageBox,
-    QHeaderView,
-    QDoubleSpinBox,
-    QHBoxLayout,
-    QFrame,
+    QWidget,
 )
-from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt, QDate, Signal
+
+from splitter_app.version import __version__
 from .theme import apply_dark_fusion, apply_muji_theme
+
 
 class MainWindow(QMainWindow):
     """
