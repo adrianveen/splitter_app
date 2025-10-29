@@ -1,12 +1,26 @@
 # src/splitter_app/ui/main_window.py
 
+from PySide6.QtCore import QDate, Qt, Signal
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QPushButton,
-    QTableWidget, QGridLayout, QDateEdit, QVBoxLayout, QMessageBox,
-    QHeaderView, QDoubleSpinBox, QHBoxLayout, QFrame
+    QComboBox,
+    QDateEdit,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, QDate, Signal
+
 from splitter_app.version import __version__
+
 
 class MainWindow(QMainWindow):
     """
