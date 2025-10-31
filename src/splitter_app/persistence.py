@@ -24,7 +24,7 @@ try:  # pragma: no cover - platform dependent
         LOCK_UN = _fcntl.LOCK_UN
 
         @staticmethod
-        def flock(file_obj, lock_flag):  # noqa: ANN001
+        def flock(file_obj, lock_flag):
             _fcntl.flock(file_obj, lock_flag)
 
     fcntl = _FcntlProxy()  # exposed name matches POSIX usage

@@ -23,7 +23,9 @@ def test_token_saved_with_strict_permissions(tmp_path, monkeypatch):
         return flow
 
     monkeypatch.setattr(
-        auth.Credentials, "from_authorized_user_file", staticmethod(fake_from_file)
+        auth.Credentials,
+        "from_authorized_user_file",
+        staticmethod(fake_from_file),
     )
     monkeypatch.setattr(
         auth.InstalledAppFlow,

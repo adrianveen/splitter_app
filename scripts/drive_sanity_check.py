@@ -17,7 +17,7 @@ if __name__ == "__main__":
     try:
         meta = _assert_file_accessible(svc, DRIVE_FILE_ID)
         print(
-            f"Can access: {meta['name']} (id={meta['id']}) driveId={meta.get('driveId')}"
+            f"Can access: {meta['name']} (id={meta['id']}) driveId={meta.get('driveId')}",
         )
     except Exception as e:
         print("Preflight failed:", repr(e))

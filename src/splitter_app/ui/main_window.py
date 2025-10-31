@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
                 "Amount",
                 "Category",
                 "Split",
-            ]
+            ],
         )
         self.table.setColumnHidden(0, True)  # hide serial internally
         hdr = self.table.horizontalHeader()

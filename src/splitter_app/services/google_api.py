@@ -35,7 +35,9 @@ def _assert_file_accessible(service, file_id: str) -> Any:
 
 
 def upload_to_drive(
-    drive_file_id: str, local_file_path: Path, credentials_path: Path
+    drive_file_id: str,
+    local_file_path: Path,
+    credentials_path: Path,
 ) -> None:
     """Upload a file to Drive."""
     service = _service(credentials_path)
@@ -81,7 +83,9 @@ def upload_to_drive(
 
 
 def download_from_drive(
-    file_id: str, output_path: Path, credentials_path: Path
+    file_id: str,
+    output_path: Path,
+    credentials_path: Path,
 ) -> None:
     """Download a file from Drive."""
     service = _service(credentials_path)
@@ -110,7 +114,9 @@ def download_from_drive(
 
 
 def read_sheet(
-    spreadsheet_id: str, range_name: str, credentials_path: Path
+    spreadsheet_id: str,
+    range_name: str,
+    credentials_path: Path,
 ) -> list[list[Any]]:
     """Return values from a Google Sheet range."""
     creds = Credentials.from_authorized_user_file(credentials_path)

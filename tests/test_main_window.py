@@ -51,7 +51,7 @@ def test_on_add_clicked_emits_transaction_added(app):
 def test_on_delete_clicked_no_selection_shows_warning(app, monkeypatch):
     win = MainWindow(["A", "B"], ["Cat"])
     # simulate no row selected
-    monkeypatch.setattr(win.table, "selectedItems", lambda: [])
+    monkeypatch.setattr(win.table, "selectedItems", list)
 
     calls = []
 

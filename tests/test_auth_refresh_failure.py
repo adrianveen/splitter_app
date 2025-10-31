@@ -35,7 +35,9 @@ def test_refresh_token_failure_fallback_to_oauth(tmp_path, monkeypatch):
         return flow
 
     monkeypatch.setattr(
-        auth.Credentials, "from_authorized_user_file", staticmethod(fake_from_file)
+        auth.Credentials,
+        "from_authorized_user_file",
+        staticmethod(fake_from_file),
     )
     monkeypatch.setattr(
         auth.InstalledAppFlow,
@@ -86,7 +88,9 @@ def test_refresh_token_success_no_oauth_needed(tmp_path, monkeypatch):
         return mock_flow
 
     monkeypatch.setattr(
-        auth.Credentials, "from_authorized_user_file", staticmethod(fake_from_file)
+        auth.Credentials,
+        "from_authorized_user_file",
+        staticmethod(fake_from_file),
     )
     monkeypatch.setattr(
         auth.InstalledAppFlow,

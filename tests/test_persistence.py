@@ -17,7 +17,14 @@ def test_save_and_load(tmp_path):
     path = tmp_path / "txns.csv"
     repo = CSVRepository(str(path))
     txn = Transaction(
-        "C001", "Coffee", "Vic", "2025-07-14", "general", "Food & Drinks", 0.5, 5.0
+        "C001",
+        "Coffee",
+        "Vic",
+        "2025-07-14",
+        "general",
+        "Food & Drinks",
+        0.5,
+        5.0,
     )
     repo.save(txn)
     loaded = repo.load_all()
@@ -54,10 +61,24 @@ def test_delete_removes_serial(tmp_path):
     path = tmp_path / "txns.csv"
     repo = CSVRepository(str(path))
     txn1 = Transaction(
-        "D001", "Movie", "Adrian", "2025-07-10", "general", "Other", 1.0, 12.0
+        "D001",
+        "Movie",
+        "Adrian",
+        "2025-07-10",
+        "general",
+        "Other",
+        1.0,
+        12.0,
     )
     txn2 = Transaction(
-        "D002", "Snack", "Vic", "2025-07-11", "general", "Food & Drinks", 0.5, 6.0
+        "D002",
+        "Snack",
+        "Vic",
+        "2025-07-11",
+        "general",
+        "Food & Drinks",
+        0.5,
+        6.0,
     )
     repo.save(txn1)
     repo.save(txn2)

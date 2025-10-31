@@ -101,7 +101,9 @@ def main() -> None:
                 )
         else:
             QMessageBox.information(
-                None, "No Data", "No transactions file found; skipping upload."
+                None,
+                "No Data",
+                "No transactions file found; skipping upload.",
             )
         sys.exit(exit_code)
 

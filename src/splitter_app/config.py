@@ -29,7 +29,7 @@ if _env_client_secrets:
     CLIENT_SECRETS_FILE: str = str(Path(_env_client_secrets))
 else:
     CLIENT_SECRETS_FILE: str = os.path.normpath(
-        resource_path("resources/credentials.json")
+        resource_path("resources/credentials.json"),
     )
 
 # --- Environment variable for external credentials ---
